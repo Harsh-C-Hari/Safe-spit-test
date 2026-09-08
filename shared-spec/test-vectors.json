@@ -1,0 +1,241 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://safespit.example.com/shared-spec/test-vectors.json",
+  "title": "SafeSpit Shared Test Vectors",
+  "description": "Literal Scenario inputs with expected SimulationResult outputs. Both the Dart (Android) and TypeScript (website) simulation implementations MUST run every vector in this file and pass every assertion. A CI step (or, at minimum, a pre-commit checklist) enforces parity. Tolerance on floating-point fields is 1e-6 unless noted.",
+  "schemaVersion": "0.1.0",
+  "vectors": [
+    {
+      "id": "TV-01-proven-zero-speed",
+      "description": "Proven test point: 0 km/h with Car must yield targetPitch = 45.0 (SIMULATION_SPEC.md, IMPLEMENTATION_PLAN.md section 4).",
+      "scenario": {
+        "schemaVersion": "0.1.0",
+        "seed": "000000",
+        "vehicle": { "id": "car", "turbulenceFactor": 1.0, "angleBias": 0.0, "windSensitivity": 1.0, "difficulty": 0.0, "displayName": "Car" },
+        "speedKmh": 0.0,
+        "pitchDeg": 45.0,
+        "rollDeg": 0.0,
+        "yawDeg": 0.0,
+        "headingDeg": 0.0,
+        "windSpeedKmh": 0.0,
+        "windDirectionDeg": 0.0,
+        "targetDistanceM": 50.0,
+        "mode": "precision"
+      },
+      "expected": {
+        "targetPitchDeg": 45.0,
+        "deltaDeg": 0.0,
+        "isClearToEject": true
+      }
+    },
+    {
+      "id": "TV-02-proven-50-kmh",
+      "description": "Proven test point: 50 km/h with Car must yield targetPitch = 57.0.",
+      "scenario": {
+        "schemaVersion": "0.1.0",
+        "seed": "000001",
+        "vehicle": { "id": "car", "turbulenceFactor": 1.0, "angleBias": 0.0, "windSensitivity": 1.0, "difficulty": 0.0, "displayName": "Car" },
+        "speedKmh": 50.0,
+        "pitchDeg": 57.0,
+        "rollDeg": 0.0,
+        "yawDeg": 0.0,
+        "headingDeg": 0.0,
+        "windSpeedKmh": 0.0,
+        "windDirectionDeg": 0.0,
+        "targetDistanceM": 50.0,
+        "mode": "precision"
+      },
+      "expected": {
+        "targetPitchDeg": 57.0,
+        "deltaDeg": 0.0,
+        "isClearToEject": true
+      }
+    },
+    {
+      "id": "TV-03-proven-200-kmh-clamp",
+      "description": "Proven test point: 200 km/h with Car must yield targetPitch = 85.0 (clamp engaged).",
+      "scenario": {
+        "schemaVersion": "0.1.0",
+        "seed": "000002",
+        "vehicle": { "id": "car", "turbulenceFactor": 1.0, "angleBias": 0.0, "windSensitivity": 1.0, "difficulty": 0.0, "displayName": "Car" },
+        "speedKmh": 200.0,
+        "pitchDeg": 85.0,
+        "rollDeg": 0.0,
+        "yawDeg": 0.0,
+        "headingDeg": 0.0,
+        "windSpeedKmh": 0.0,
+        "windDirectionDeg": 0.0,
+        "targetDistanceM": 50.0,
+        "mode": "precision"
+      },
+      "expected": {
+        "targetPitchDeg": 85.0,
+        "deltaDeg": 0.0,
+        "isClearToEject": true
+      }
+    },
+    {
+      "id": "TV-04-tolerance-just-inside",
+      "description": "Lock tolerance boundary: deltaDeg = 4.9 must yield isClearToEject = true.",
+      "scenario": {
+        "schemaVersion": "0.1.0",
+        "seed": "000003",
+        "vehicle": { "id": "car", "turbulenceFactor": 1.0, "angleBias": 0.0, "windSensitivity": 1.0, "difficulty": 0.0, "displayName": "Car" },
+        "speedKmh": 50.0,
+        "pitchDeg": 52.1,
+        "rollDeg": 0.0,
+        "yawDeg": 0.0,
+        "headingDeg": 0.0,
+        "windSpeedKmh": 0.0,
+        "windDirectionDeg": 0.0,
+        "targetDistanceM": 50.0,
+        "mode": "precision"
+      },
+      "expected": {
+        "targetPitchDeg": 57.0,
+        "deltaDeg": 4.9,
+        "isClearToEject": true
+      }
+    },
+    {
+      "id": "TV-05-tolerance-edge-inclusive",
+      "description": "Lock tolerance boundary: deltaDeg = 5.0 must yield isClearToEject = true (inclusive per the proven <=).",
+      "scenario": {
+        "schemaVersion": "0.1.0",
+        "seed": "000004",
+        "vehicle": { "id": "car", "turbulenceFactor": 1.0, "angleBias": 0.0, "windSensitivity": 1.0, "difficulty": 0.0, "displayName": "Car" },
+        "speedKmh": 50.0,
+        "pitchDeg": 52.0,
+        "rollDeg": 0.0,
+        "yawDeg": 0.0,
+        "headingDeg": 0.0,
+        "windSpeedKmh": 0.0,
+        "windDirectionDeg": 0.0,
+        "targetDistanceM": 50.0,
+        "mode": "precision"
+      },
+      "expected": {
+        "targetPitchDeg": 57.0,
+        "deltaDeg": 5.0,
+        "isClearToEject": true
+      }
+    },
+    {
+      "id": "TV-06-tolerance-just-outside",
+      "description": "Lock tolerance boundary: deltaDeg = 5.1 must yield isClearToEject = false.",
+      "scenario": {
+        "schemaVersion": "0.1.0",
+        "seed": "000005",
+        "vehicle": { "id": "car", "turbulenceFactor": 1.0, "angleBias": 0.0, "windSensitivity": 1.0, "difficulty": 0.0, "displayName": "Car" },
+        "speedKmh": 50.0,
+        "pitchDeg": 51.9,
+        "rollDeg": 0.0,
+        "yawDeg": 0.0,
+        "headingDeg": 0.0,
+        "windSpeedKmh": 0.0,
+        "windDirectionDeg": 0.0,
+        "targetDistanceM": 50.0,
+        "mode": "precision"
+      },
+      "expected": {
+        "targetPitchDeg": 57.0,
+        "deltaDeg": 5.1,
+        "isClearToEject": false
+      }
+    },
+    {
+      "id": "TV-07-negative-speed-clamp",
+      "description": "Defensive negative-speed clamping (D-14): speedKmh = -10 must behave identically to speedKmh = 0 (Car, targetPitch = 45.0).",
+      "scenario": {
+        "schemaVersion": "0.1.0",
+        "seed": "000006",
+        "vehicle": { "id": "car", "turbulenceFactor": 1.0, "angleBias": 0.0, "windSensitivity": 1.0, "difficulty": 0.0, "displayName": "Car" },
+        "speedKmh": -10.0,
+        "pitchDeg": 45.0,
+        "rollDeg": 0.0,
+        "yawDeg": 0.0,
+        "headingDeg": 0.0,
+        "windSpeedKmh": 0.0,
+        "windDirectionDeg": 0.0,
+        "targetDistanceM": 50.0,
+        "mode": "precision"
+      },
+      "expected": {
+        "targetPitchDeg": 45.0,
+        "deltaDeg": 0.0,
+        "isClearToEject": true
+      }
+    },
+    {
+      "id": "TV-08-car-identity-100-kmh",
+      "description": "Car identity (D-4): with Car profile (turbulenceFactor=1.0, angleBias=0.0) the proven formula gives 45 + (100/5)*1.2 = 69.0, with no clamp needed.",
+      "scenario": {
+        "schemaVersion": "0.1.0",
+        "seed": "000007",
+        "vehicle": { "id": "car", "turbulenceFactor": 1.0, "angleBias": 0.0, "windSensitivity": 1.0, "difficulty": 0.0, "displayName": "Car" },
+        "speedKmh": 100.0,
+        "pitchDeg": 69.0,
+        "rollDeg": 0.0,
+        "yawDeg": 0.0,
+        "headingDeg": 0.0,
+        "windSpeedKmh": 0.0,
+        "windDirectionDeg": 0.0,
+        "targetDistanceM": 50.0,
+        "mode": "precision"
+      },
+      "expected": {
+        "targetPitchDeg": 69.0,
+        "deltaDeg": 0.0,
+        "isClearToEject": true
+      }
+    },
+    {
+      "id": "TV-09-wind-does-not-affect-pitch",
+      "description": "Wind affects impactPosition/deviationM but NOT targetPitchDeg (D-5).",
+      "scenario": {
+        "schemaVersion": "0.1.0",
+        "seed": "000008",
+        "vehicle": { "id": "car", "turbulenceFactor": 1.0, "angleBias": 0.0, "windSensitivity": 1.0, "difficulty": 0.0, "displayName": "Car" },
+        "speedKmh": 50.0,
+        "pitchDeg": 57.0,
+        "rollDeg": 0.0,
+        "yawDeg": 0.0,
+        "headingDeg": 0.0,
+        "windSpeedKmh": 30.0,
+        "windDirectionDeg": 90.0,
+        "targetDistanceM": 50.0,
+        "mode": "crosswind"
+      },
+      "expected": {
+        "targetPitchDeg": 57.0,
+        "deltaDeg": 0.0,
+        "isClearToEject": true,
+        "notes": "deviationM MUST be > 0.0 for this vector; cross-check against TV-02 (no-wind same Scenario) which has identical targetPitchDeg."
+      }
+    },
+    {
+      "id": "TV-10-determinism-same-inputs-same-output",
+      "description": "Determinism (D-11): running the same Scenario twice MUST produce a SimulationResult with identical numeric fields. Both Dart and TypeScript implementations assert this by hashing the JSON and comparing.",
+      "scenario": {
+        "schemaVersion": "0.1.0",
+        "seed": "ABC123",
+        "vehicle": { "id": "car", "turbulenceFactor": 1.0, "angleBias": 0.0, "windSensitivity": 1.0, "difficulty": 0.5, "displayName": "Car" },
+        "speedKmh": 75.0,
+        "pitchDeg": 63.0,
+        "rollDeg": 0.0,
+        "yawDeg": 0.0,
+        "headingDeg": 0.0,
+        "windSpeedKmh": 5.0,
+        "windDirectionDeg": 180.0,
+        "targetDistanceM": 50.0,
+        "mode": "precision"
+      },
+      "expected": {
+        "targetPitchDeg": 63.0,
+        "deltaDeg": 0.0,
+        "isClearToEject": true,
+        "notes": "targetPitchDeg = 45 + 75/5*1.2 = 63.0. lockQuality MUST be reproducible to 1e-6 between two runs and across implementations."
+      }
+    }
+  ]
+}

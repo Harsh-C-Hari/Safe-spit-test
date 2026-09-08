@@ -1,0 +1,99 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://safespit.example.com/shared-spec/result.schema.json",
+  "title": "SafeSpit SimulationResult",
+  "description": "Output document of the deterministic SafeSpit simulation. Given a Scenario, both the Dart and TypeScript implementations produce a SimulationResult that is bit-identical (within floating-point tolerance) — this is enforced by shared-spec/test-vectors.json.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "scenarioSeed",
+    "targetPitchDeg",
+    "deltaDeg",
+    "isClearToEject",
+    "lockQuality",
+    "trajectory",
+    "impactPosition",
+    "deviationM",
+    "score",
+    "scoreBreakdown"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "scenarioSeed": {
+      "type": "string",
+      "pattern": "^[0-9A-Fa-f]{6}$",
+      "description": "Echoes the input scenario seed. Used for result tracking and replay."
+    },
+    "targetPitchDeg": {
+      "type": "number",
+      "minimum": 45.0,
+      "maximum": 85.0,
+      "description": "Computed optimal departure pitch per the proven base formula + vehicle modifier. Always within [45, 85] because of the clamp."
+    },
+    "deltaDeg": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 180.0,
+      "description": "Absolute difference between actual pitch (input) and target pitch. deltaDeg <= 5.0 is the lock tolerance."
+    },
+    "isClearToEject": {
+      "type": "boolean",
+      "description": "True iff deltaDeg <= 5.0. The lock is held for as long as this is true; audio/haptic cue fires on the edge transition only (D-13)."
+    },
+    "lockQuality": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 1.0,
+      "description": "Smoothed quality of the lock window: 1.0 = perfectly centered, 0.0 = far outside the 5-degree window. Used for scoring nuance (GAME_SPEC.md)."
+    },
+    "trajectory": {
+      "type": "array",
+      "description": "Polyline of the simulated projectile path in meters, NOT pixels. At least 2 points; length is implementation-defined but MUST be deterministic for a given Scenario.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["x", "y"],
+        "properties": {
+          "x": { "type": "number" },
+          "y": { "type": "number" }
+        }
+      }
+    },
+    "impactPosition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["x", "y"],
+      "properties": {
+        "x": { "type": "number", "description": "Lateral offset from the target center, in meters." },
+        "y": { "type": "number", "description": "Lateral offset from the target center, in meters." }
+      }
+    },
+    "deviationM": {
+      "type": "number",
+      "minimum": 0.0,
+      "description": "Euclidean distance between the impact position and the target center, in meters. Wind affects this; lock pitch does not (D-5)."
+    },
+    "score": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 100000,
+      "description": "Final score. Deterministic function of the simulation inputs and constants defined in the simulation implementation. Constants are tuned during playtesting; final values recorded in update.ai/DECISIONS.md (D-11)."
+    },
+    "scoreBreakdown": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["precision", "impact", "timing", "stability", "style"],
+      "properties": {
+        "precision": { "type": "integer", "minimum": 0, "description": "How close the player held the target angle." },
+        "impact":    { "type": "integer", "minimum": 0, "description": "How close the impact was to the target center." },
+        "timing":    { "type": "integer", "minimum": 0, "description": "How fast the lock was acquired (after a small grace period)." },
+        "stability": { "type": "integer", "minimum": 0, "description": "How steady the player held the angle during the lock window." },
+        "style":     { "type": "integer", "minimum": 0, "description": "Cosmetic-only bonus. Never affects ranking (D-11)." }
+      }
+    }
+  }
+}

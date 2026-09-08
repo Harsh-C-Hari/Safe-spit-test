@@ -1,0 +1,47 @@
+name: safespit
+description: "SAFE//SPIT — Tactical Trajectory Calculation System for Simulated Projectile Deployment"
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.13.1
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.8
+
+  # Sensors — proven prototype dependencies (Rule 6)
+  geolocator: ^13.0.2
+  sensors_plus: ^6.1.0
+  camera: ^0.11.0
+
+  # Permissions — proven prototype dependency (Rule 6)
+  permission_handler: ^11.3.1
+
+  # Audio — planned (D-17; replaces prototype's UrlSource)
+  audioplayers: ^6.1.0
+
+  # State management — planned (D-8, D-16)
+  provider: ^6.1.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/audio/
+    - assets/fonts/
+
+  fonts:
+    - family: SpaceMono
+      fonts:
+        - asset: assets/fonts/SpaceMono-Regular.ttf
+        - asset: assets/fonts/SpaceMono-Bold.ttf
+          weight: 700

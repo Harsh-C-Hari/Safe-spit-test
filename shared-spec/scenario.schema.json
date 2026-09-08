@@ -1,0 +1,151 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://safespit.example.com/shared-spec/scenario.schema.json",
+  "title": "SafeSpit Scenario",
+  "description": "Input document for the deterministic SafeSpit simulation. Both the Dart (Android) and TypeScript (website) implementations MUST validate every incoming Scenario against this schema and produce a SimulationResult that matches shared-spec/result.schema.json to floating-point tolerance.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "seed",
+    "vehicle",
+    "speedKmh",
+    "pitchDeg",
+    "rollDeg",
+    "yawDeg",
+    "headingDeg",
+    "windSpeedKmh",
+    "windDirectionDeg",
+    "targetDistanceM",
+    "mode"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+      "description": "Semver of this scenario contract. Both implementations pin the version they support and reject mismatches with a clear error."
+    },
+    "seed": {
+      "type": "string",
+      "pattern": "^[0-9A-Fa-f]{6}$",
+      "description": "6-character hex string that fully determines wind, target placement, and any mode-specific random elements. Case-insensitive on input; implementations SHOULD normalize to uppercase."
+    },
+    "vehicle": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "turbulenceFactor",
+        "angleBias",
+        "windSensitivity",
+        "difficulty",
+        "displayName"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]{0,31}$",
+          "description": "Stable vehicle identifier (snake_case). The Car profile id MUST be 'car'."
+        },
+        "turbulenceFactor": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 4.0,
+          "description": "Multiplicative modifier on the (v / speedStepKmh) term of the proven pitch formula. Car = 1.0 (identity)."
+        },
+        "angleBias": {
+          "type": "number",
+          "minimum": -10.0,
+          "maximum": 10.0,
+          "description": "Additive degrees applied after the base formula and clamp. Car = 0.0 (identity)."
+        },
+        "windSensitivity": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 4.0,
+          "description": "Multiplier on the wind-driven deviation applied to impactPosition. Car = 1.0."
+        },
+        "difficulty": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "0.0 = trivial, 1.0 = expert. Used by mode-specific scoring weights."
+        },
+        "displayName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 32,
+          "description": "Human-facing name (e.g. 'Car', 'Bus', 'Train'). Fictional, no realism required."
+        }
+      }
+    },
+    "speedKmh": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 500.0,
+      "description": "Vehicle speed in km/h. Negative values are invalid; implementations MUST clamp to 0.0 before applying the pitch formula (D-14)."
+    },
+    "pitchDeg": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 180.0,
+      "description": "Actual device pitch (integrated gyroscope Y-axis) at the moment of the simulation tick."
+    },
+    "rollDeg": {
+      "type": "number",
+      "minimum": -180.0,
+      "maximum": 180.0,
+      "default": 0.0,
+      "description": "Roll angle. The reference build uses 0.0; the field exists for Phase B."
+    },
+    "yawDeg": {
+      "type": "number",
+      "minimum": -180.0,
+      "maximum": 180.0,
+      "default": 0.0,
+      "description": "Yaw angle. The reference build uses 0.0; the field exists for Phase B."
+    },
+    "headingDeg": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 360.0,
+      "default": 0.0,
+      "description": "Compass heading. 0 = North. The reference build uses 0.0; the field exists for Phase B."
+    },
+    "windSpeedKmh": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 200.0,
+      "default": 0.0,
+      "description": "Wind speed. If not explicitly set by the caller, implementations MUST derive it deterministically from the scenario seed (D-11)."
+    },
+    "windDirectionDeg": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 360.0,
+      "default": 0.0,
+      "description": "Wind direction (where the wind is coming from, 0 = North). If not explicitly set, derived deterministically from the seed."
+    },
+    "targetDistanceM": {
+      "type": "number",
+      "exclusiveMinimum": 0.0,
+      "maximum": 1000.0,
+      "default": 50.0,
+      "description": "Distance to the simulated target (Spit Olympics). If not explicitly set, derived deterministically from the seed."
+    },
+    "mode": {
+      "type": "string",
+      "enum": [
+        "precision",
+        "target_strike",
+        "speed_lock",
+        "crosswind",
+        "chaos",
+        "blind",
+        "vehicle_challenge",
+        "tournament"
+      ],
+      "description": "Game mode. Determines which scoring weights, HUD elements, and simulation variants apply."
+    }
+  }
+}
