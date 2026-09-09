@@ -18,6 +18,7 @@ import 'dart:math' as math;
 
 import 'package:geolocator/geolocator.dart';
 import 'package:sensors_plus/sensors_plus.dart';
+import 'package:flutter_compass/flutter_compass.dart';
 
 import 'normalized_telemetry.dart';
 
@@ -34,12 +35,16 @@ class SensorManager {
   double _speedKmh = 0.0;
   double _pitchDeg = 45.0; // SENSOR_SPEC.md: default to 45° (optimal) not 0°
   DateTime? _lastGyroTime;
+  double? _gpsHeading;
+  double? _compassHeading;
+  bool _isFacingBackwards = false;
 
   SensorHealthStatus _gpsHealth = SensorHealthStatus.permissionDenied;
   SensorHealthStatus _gyroHealth = SensorHealthStatus.permissionDenied;
 
   StreamSubscription<Position>? _gpsSubscription;
   StreamSubscription<GyroscopeEvent>? _gyroSubscription;
+  StreamSubscription<CompassEvent>? _compassSubscription;
 
   final StreamController<NormalizedTelemetry> _controller =
       StreamController<NormalizedTelemetry>.broadcast();
@@ -53,12 +58,14 @@ class SensorManager {
   Future<void> start() async {
     await _startGps();
     await _startGyro();
+    _startCompass();
   }
 
   /// Stop all sensors and release resources.
   void dispose() {
     _gpsSubscription?.cancel();
     _gyroSubscription?.cancel();
+    _compassSubscription?.cancel();
     _controller.close();
   }
 
@@ -79,6 +86,8 @@ class SensorManager {
         (Position position) {
           // PROVEN: v_ms * 3.6 → km/h
           _speedKmh = (position.speed * 3.6).clamp(0.0, double.infinity);
+          _gpsHeading = position.heading;
+          _checkFacingBackwards();
           _gpsHealth = SensorHealthStatus.ok;
           _emit();
         },
@@ -139,6 +148,35 @@ class SensorManager {
     }
   }
 
+  // ── Auto-detect Facing Backwards ──────────────────────────────────────────
+
+  void _startCompass() {
+    try {
+      _compassSubscription = FlutterCompass.events?.listen((CompassEvent event) {
+        if (event.heading != null) {
+          _compassHeading = event.heading;
+          _checkFacingBackwards();
+          _emit();
+        }
+      }, onError: (e) {
+        // compass missing/failed
+      });
+    } catch (e) {
+      // ignore
+    }
+  }
+
+  void _checkFacingBackwards() {
+    if (_gpsHeading != null && _compassHeading != null && _speedKmh > 5.0) {
+      // only check when moving significantly
+      double diff = (_gpsHeading! - _compassHeading!).abs() % 360.0;
+      if (diff > 180.0) diff = 360.0 - diff;
+      
+      // If difference between vehicle direction and phone facing is > 90 deg
+      _isFacingBackwards = diff > 90.0;
+    }
+  }
+
   // ── Telemetry emission ────────────────────────────────────────────────────
 
   void _emit() {
@@ -152,6 +190,7 @@ class SensorManager {
         gyro: _gyroHealth,
       ),
       isDemoMode: false,
+      isFacingBackwards: _isFacingBackwards,
     ));
   }
 }

@@ -101,3 +101,5 @@ Nothing. `flutter analyze lib/` clean. 37/37 tests passing.
 ## Blockers
 
 None. All pure-Dart tests passing. Analyzer clean. Ready for device testing.
+
+- Phase 8 update (2026-09-08): Vehicle system — direction indicator (headingDeg) and aim-guide arrow implemented; vehicle selector (`vehicle_select_screen.dart`) and profile data (`vehicle_profiles.dart`) remain planned. Car identity profile preserved per D-4.

@@ -76,7 +76,7 @@ void main() {
       // targetPitch(50) = 57.0; actualPitch = 52.1 → delta = 4.9
       expect(
         SafeSpitCalculator.isClearToEject(
-            actualPitchDeg: 52.1, targetPitchDeg: 57.0),
+            actualPitchDeg: 52.1, targetPitchDeg: 57.0, speedKmh: 50.0),
         isTrue,
       );
     });
@@ -85,7 +85,7 @@ void main() {
     test('TV-05: deltaDeg=5.0 → isClearToEject=true (inclusive)', () {
       expect(
         SafeSpitCalculator.isClearToEject(
-            actualPitchDeg: 52.0, targetPitchDeg: 57.0),
+            actualPitchDeg: 52.0, targetPitchDeg: 57.0, speedKmh: 50.0),
         isTrue,
       );
     });
@@ -94,7 +94,7 @@ void main() {
     test('TV-06: deltaDeg=5.1 → isClearToEject=false', () {
       expect(
         SafeSpitCalculator.isClearToEject(
-            actualPitchDeg: 51.9, targetPitchDeg: 57.0),
+            actualPitchDeg: 51.9, targetPitchDeg: 57.0, speedKmh: 50.0),
         isFalse,
       );
     });
@@ -102,7 +102,7 @@ void main() {
     test('exact match: actualPitch == targetPitch → locked', () {
       expect(
         SafeSpitCalculator.isClearToEject(
-            actualPitchDeg: 57.0, targetPitchDeg: 57.0),
+            actualPitchDeg: 57.0, targetPitchDeg: 57.0, speedKmh: 50.0),
         isTrue,
       );
     });

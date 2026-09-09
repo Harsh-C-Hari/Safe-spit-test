@@ -14,11 +14,15 @@ import 'trajectory_model.dart';
 /// This is a pure function — no I/O, no side effects.
 /// Suitable for unit testing, replay, and website parity.
 SimulationResult simulate(ScenarioInput input) {
-  // ── Core proven formula ─────────────────────────────────────────────────
-  final double targetPitchDeg = SafeSpitCalculator.targetPitch(
+  final double baseTargetPitchDeg = SafeSpitCalculator.targetPitch(
     input.speedKmh,
     vehicle: input.vehicle,
+    isFacingBackwards: input.isFacingBackwards,
   );
+
+  final double targetPitchDeg = input.seatSide == 'passenger'
+      ? 180.0 - baseTargetPitchDeg
+      : baseTargetPitchDeg;
 
   final double delta = SafeSpitCalculator.deltaDeg(
     actualPitchDeg: input.pitchDeg,
@@ -28,11 +32,17 @@ SimulationResult simulate(ScenarioInput input) {
   final bool locked = SafeSpitCalculator.isClearToEject(
     actualPitchDeg: input.pitchDeg,
     targetPitchDeg: targetPitchDeg,
+    speedKmh: input.speedKmh,
+    isFacingBackwards: input.isFacingBackwards,
   );
 
   // ── Lock quality (PLANNED) ──────────────────────────────────────────────
+  final double lockTolerance = (input.isFacingBackwards || input.speedKmh < 2.0)
+      ? SafeSpitCalculator.relaxedToleranceDeg 
+      : SafeSpitCalculator.lockToleranceDeg;
+
   final double lockQuality = locked
-      ? (1.0 - (delta / SafeSpitCalculator.lockToleranceDeg)).clamp(0.0, 1.0)
+      ? (1.0 - (delta / lockTolerance)).clamp(0.0, 1.0)
       : 0.0;
 
   // ── Wind deviation (PLANNED, D-5) ───────────────────────────────────────

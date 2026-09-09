@@ -21,6 +21,7 @@ class VehicleProfiles {
     angleBias: 0.0,
     windSensitivity: 1.0,
     difficulty: 0.0,
+    eitherSide: true,
   );
 
   /// Bus â€” heavy, turbulent, high angleBias from road vibration.
@@ -43,6 +44,7 @@ class VehicleProfiles {
     angleBias: -1.0,
     windSensitivity: 1.8,
     difficulty: 0.3,
+    eitherSide: true,
   );
 
   /// Auto (Rickshaw) â€” chaotic, unpredictable, maximum fun.
@@ -55,8 +57,48 @@ class VehicleProfiles {
     difficulty: 0.6,
   );
 
+  /// Train â€” heavy, steady, low turbulence, high wind sensitivity from long body.
+  static const VehicleProfile train = VehicleProfile(
+    id: 'train',
+    displayName: 'Train',
+    turbulenceFactor: 1.1,
+    angleBias: 1.5,
+    windSensitivity: 1.2,
+    difficulty: 0.5,
+  );
+  /// Tractor — very high turbulence, unpredictable angle.
+  static const VehicleProfile tractor = VehicleProfile(
+    id: 'tractor',
+    displayName: 'Tractor',
+    turbulenceFactor: 1.35,
+    angleBias: 4.0,
+    windSensitivity: 1.0,
+    difficulty: 0.8,
+  );
+
+  /// Aircraft — high speed, low ground turbulence, high wind at altitude.
+  static const VehicleProfile aircraft = VehicleProfile(
+    id: 'aircraft',
+    displayName: 'Aircraft',
+    turbulenceFactor: 0.95,
+    angleBias: -0.5,
+    windSensitivity: 2.0,
+    difficulty: 0.7,
+  );
+
+  /// Walking — very low speed, high directional variability.
+  static const VehicleProfile walking = VehicleProfile(
+    id: 'walking',
+    displayName: 'Walking',
+    turbulenceFactor: 1.0,
+    angleBias: -2.0,
+    windSensitivity: 1.5,
+    difficulty: 0.2,
+    eitherSide: true,
+  );
+
   /// All available vehicles for the reference build (Phase 8).
-  static const List<VehicleProfile> all = [car, bus, bike, auto];
+  static const List<VehicleProfile> all = [car, bus, bike, auto, train, tractor, aircraft, walking];
 
   /// Find a profile by id (case-insensitive). Returns [car] if not found.
   static VehicleProfile byId(String id) {

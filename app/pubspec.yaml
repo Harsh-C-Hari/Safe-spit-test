@@ -26,6 +26,7 @@ dependencies:
 
   # State management — planned (D-8, D-16)
   provider: ^6.1.2
+  flutter_compass: ^0.8.1
 
 dev_dependencies:
   flutter_test:

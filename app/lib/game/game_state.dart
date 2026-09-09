@@ -39,6 +39,8 @@ class GameState extends ChangeNotifier {
 
   VehicleProfile _vehicle = VehicleProfiles.car;
   VehicleProfile get vehicle => _vehicle;
+  String _seatSide = 'driver'; // India: driver=right, passenger=left
+  String get seatSide => _seatSide;
 
   String _mode = 'precision';
   String get mode => _mode;
@@ -67,6 +69,8 @@ class GameState extends ChangeNotifier {
   // ── Demo mode ─────────────────────────────────────────────────────────────
   bool _isDemoMode = false;
   bool get isDemoMode => _isDemoMode;
+
+  bool get isFacingBackwards => _telemetry.isFacingBackwards;
 
   // ── Sensor Management ───────────────────────────────────────────────────────
   SensorManager? _sensorManager;
@@ -118,6 +122,8 @@ class GameState extends ChangeNotifier {
       pitchDeg: telemetry.pitchDeg,
       windSpeedKmh: 0.0, // TODO: derive from seed in Phase 4 full impl
       windDirectionDeg: 0.0,
+      seatSide: _seatSide,
+      isFacingBackwards: telemetry.isFacingBackwards,
       mode: _mode,
     );
 
@@ -198,6 +204,7 @@ class GameState extends ChangeNotifier {
     _vehicle = vehicle;
     notifyListeners();
   }
+  void setSeatSide(String s) { _seatSide = s; notifyListeners(); }
 
   void _setPhase(GamePhase phase) {
     _phase = phase;

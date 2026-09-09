@@ -24,6 +24,7 @@ class SafeSpitCalculator {
   static const double tiltPerSpeedStep = 1.2; // degrees per speed-step
   static const double speedStepKmh = 5.0; // km/h per step
   static const double lockToleranceDeg = 5.0; // PROVEN: |Δθ| <= 5.0 → locked
+  static const double relaxedToleranceDeg = 15.0; // rear-facing tolerance
 
   // ── PROVEN formula ─────────────────────────────────────────────────────────
 
@@ -33,7 +34,10 @@ class SafeSpitCalculator {
   ///
   /// With the Car profile (turbulenceFactor=1.0, angleBias=0.0) this reproduces
   /// the proven prototype formula exactly (D-4, TV-08).
-  static double targetPitch(double speedKmh, {VehicleProfile? vehicle}) {
+  static double targetPitch(double speedKmh, {VehicleProfile? vehicle, bool isFacingBackwards = false}) {
+    // If facing backwards, relative wind is pushing spit away. No need to tilt up.
+    if (isFacingBackwards) return baseAngle;
+
     // Rule 16 / D-14: Clamp negative speed.
     final double v = speedKmh < 0 ? 0 : speedKmh;
     final double tf = vehicle?.turbulenceFactor ?? 1.0;
@@ -50,9 +54,13 @@ class SafeSpitCalculator {
   static bool isClearToEject({
     required double actualPitchDeg,
     required double targetPitchDeg,
+    required double speedKmh,
+    bool isFacingBackwards = false,
   }) {
     final double delta = (actualPitchDeg - targetPitchDeg).abs();
-    return delta <= lockToleranceDeg;
+    // At very low speeds (< 2.0 km/h), aerodynamic danger is ~0. Apply relaxed tolerance.
+    final bool useRelaxed = isFacingBackwards || speedKmh < 2.0;
+    return delta <= (useRelaxed ? relaxedToleranceDeg : lockToleranceDeg);
   }
 
   /// Delta in degrees between actual and target pitch.
@@ -74,6 +82,7 @@ class VehicleProfile {
   final double angleBias; // Car = 0.0 (identity)
   final double windSensitivity; // Car = 1.0
   final double difficulty; // 0.0..1.0
+  final bool eitherSide; // bike/walking can spit either side
 
   const VehicleProfile({
     required this.id,
@@ -82,9 +91,10 @@ class VehicleProfile {
     required this.angleBias,
     required this.windSensitivity,
     required this.difficulty,
+    this.eitherSide = false,
   });
 
-  factory VehicleProfile.fromJson(Map<String, dynamic> json) {
+    factory VehicleProfile.fromJson(Map<String, dynamic> json) {
     return VehicleProfile(
       id: json['id'] as String,
       displayName: json['displayName'] as String,
@@ -92,15 +102,17 @@ class VehicleProfile {
       angleBias: (json['angleBias'] as num).toDouble(),
       windSensitivity: (json['windSensitivity'] as num).toDouble(),
       difficulty: (json['difficulty'] as num).toDouble(),
+      eitherSide: json['eitherSide'] as bool? ?? false,
     );
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'displayName': displayName,
-        'turbulenceFactor': turbulenceFactor,
-        'angleBias': angleBias,
-        'windSensitivity': windSensitivity,
-        'difficulty': difficulty,
-      };
+    'id': id,
+    'displayName': displayName,
+    'turbulenceFactor': turbulenceFactor,
+    'angleBias': angleBias,
+    'windSensitivity': windSensitivity,
+    'difficulty': difficulty,
+    'eitherSide': eitherSide,
+  };
 }

@@ -13,6 +13,7 @@
 import 'dart:async';
 import 'dart:math' as math;
 import 'package:sensors_plus/sensors_plus.dart';
+import 'package:flutter_compass/flutter_compass.dart';
 import 'normalized_telemetry.dart';
 
 /// A hybrid telemetry source for Demo Mode.
@@ -23,9 +24,14 @@ class DemoModeSource {
 
   StreamController<NormalizedTelemetry>? _controller;
   StreamSubscription<GyroscopeEvent>? _gyroSubscription;
+  StreamSubscription<CompassEvent>? _compassSubscription;
   
   double _pitchDeg = 45.0; // Start at 45 degrees
   DateTime? _lastGyroTime;
+  
+  // Simulated forward path is 0° (North)
+  static const double _simulatedGpsHeading = 0.0;
+  bool _isFacingBackwards = false;
 
   /// The live telemetry stream. Subscribe to receive updates.
   Stream<NormalizedTelemetry> get stream {
@@ -62,6 +68,19 @@ class DemoModeSource {
     } catch (e) {
       _emit();
     }
+
+    try {
+      _compassSubscription = FlutterCompass.events?.listen((CompassEvent event) {
+        if (event.heading != null) {
+          double diff = (_simulatedGpsHeading - event.heading!).abs() % 360.0;
+          if (diff > 180.0) diff = 360.0 - diff;
+          _isFacingBackwards = diff > 90.0;
+          _emit();
+        }
+      });
+    } catch (e) {
+      // ignore
+    }
   }
 
   void _emit() {
@@ -79,6 +98,7 @@ class DemoModeSource {
         camera: SensorHealthStatus.permissionDenied,
       ),
       isDemoMode: true,
+      isFacingBackwards: _isFacingBackwards,
     );
 
     _controller?.add(telemetry);
@@ -87,6 +107,8 @@ class DemoModeSource {
   void _stop() {
     _gyroSubscription?.cancel();
     _gyroSubscription = null;
+    _compassSubscription?.cancel();
+    _compassSubscription = null;
   }
 
   /// Dispose and release resources.

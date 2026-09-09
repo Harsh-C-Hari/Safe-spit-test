@@ -82,6 +82,8 @@ class NormalizedTelemetry {
   final DateTime timestamp;
   final SensorHealth sensorHealth;
   final bool isDemoMode;
+  final String seatSide; // driver=left, passenger=right (India)
+  final bool isFacingBackwards; // true if phone faces opposite to GPS travel direction
 
   const NormalizedTelemetry({
     required this.speedKmh,
@@ -92,6 +94,8 @@ class NormalizedTelemetry {
     required this.timestamp,
     required this.sensorHealth,
     this.isDemoMode = false,
+    this.seatSide = 'driver',
+    this.isFacingBackwards = false,
   });
 
   /// Default telemetry when no sensors are available.
@@ -101,6 +105,7 @@ class NormalizedTelemetry {
       pitchDeg: 45.0, // Default to optimal angle (per SENSOR_SPEC.md)
       timestamp: DateTime.now(),
       sensorHealth: const SensorHealth.allDenied(),
+      isFacingBackwards: false,
     );
   }
 
@@ -113,6 +118,7 @@ class NormalizedTelemetry {
     DateTime? timestamp,
     SensorHealth? sensorHealth,
     bool? isDemoMode,
+    bool? isFacingBackwards,
   }) {
     return NormalizedTelemetry(
       speedKmh: speedKmh ?? this.speedKmh,
@@ -123,6 +129,7 @@ class NormalizedTelemetry {
       timestamp: timestamp ?? this.timestamp,
       sensorHealth: sensorHealth ?? this.sensorHealth,
       isDemoMode: isDemoMode ?? this.isDemoMode,
+      isFacingBackwards: isFacingBackwards ?? this.isFacingBackwards,
     );
   }
 }

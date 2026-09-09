@@ -1,4 +1,4 @@
-// scoring_test.dart — SAFE//SPIT
+ï»¿// scoring_test.dart â€” SAFE//SPIT
 //
 // Phase 9 acceptance: scoring determinism + edge cases.
 // RULE 11: No DateTime.now(), no Random() in tests.
@@ -7,7 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:safespit/simulation/scoring.dart';
 
 void main() {
-  group('computeScore — determinism', () {
+  group('computeScore â€” determinism', () {
     test('same inputs produce identical output', () {
       final a = computeScore(lockQuality: 0.85, deviationM: 0.5, timeToLockMs: 3000, mode: 'precision');
       final b = computeScore(lockQuality: 0.85, deviationM: 0.5, timeToLockMs: 3000, mode: 'precision');
@@ -23,7 +23,7 @@ void main() {
     });
   });
 
-  group('computeScore — edge cases', () {
+  group('computeScore â€” edge cases', () {
     test('perfect lock: lockQuality=1.0 ? precision=500', () {
       final s = computeScore(lockQuality: 1.0, deviationM: 0.0, timeToLockMs: 1000, mode: 'precision');
       expect(s.precision, equals(500));

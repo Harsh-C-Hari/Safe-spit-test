@@ -34,6 +34,7 @@ class MissileLockReticlePainter extends CustomPainter {
   final double lockQuality; // 0.0..1.0
   final double deltaDeg;
   final bool isDemoMode;
+  final String seatSide; // driver/passenger
 
   // PLANNED fields
   final List<TrajectoryPoint>? trajectoryPoints;
@@ -50,6 +51,7 @@ class MissileLockReticlePainter extends CustomPainter {
     required this.lockQuality,
     required this.deltaDeg,
     required this.isDemoMode,
+    this.seatSide = 'driver',
     this.trajectoryPoints,
     this.deviationM,
     this.animValue = 0.0,
@@ -84,6 +86,11 @@ class MissileLockReticlePainter extends CustomPainter {
       ..color = primaryColor
       ..style = PaintingStyle.fill;
     canvas.drawCircle(Offset(cx, cy), 3.0, pipPaint);
+
+    // ── AIM GUIDE ARROW (hidden when locked) ────────────────────────────────
+    if (lockState != SpitLockState.locked) {
+      _drawAimArrow(canvas, size, cx, cy, deltaDeg, speedKmh, actualPitchDeg, targetPitchDeg, seatSide: seatSide);
+    }
 
     // ── PROVEN: Corner brackets ────────────────────────────────────────────
     final double bracketSize = size.width * 0.08;
@@ -266,6 +273,29 @@ class MissileLockReticlePainter extends CustomPainter {
     final Rect demoRect = Rect.fromLTWH(
         size.width - 52, size.height - 20, 46, 14);
     canvas.drawRect(demoRect, demoPaint);
+  }
+
+  void _drawAimArrow(Canvas canvas, Size size, double cx, double cy,
+      double deltaDeg, double speedKmh, double actualPitch, double targetPitch,
+      {String seatSide = 'driver'}) {
+    final bool isLeft = seatSide == 'passenger'; // India: driver right, passenger left
+    final Paint arrowPaint = Paint()
+      ..color = kTacticalGreen.withValues(alpha: 0.85)
+      ..style = PaintingStyle.fill;
+    // Arrow points toward selected side; offset direction based on seatSide
+    double offset = (deltaDeg / 3.0).clamp(-35.0, 35.0);
+    offset *= (speedKmh / 30.0).clamp(0.5, 2.0);
+    if (!isLeft) offset = -offset; // passenger = opposite side
+    final double arrowX = cx + offset;
+    final double arrowY = cy - 55; // above center pad
+    final Path path = Path()
+      ..moveTo(arrowX, arrowY)
+      ..lineTo(arrowX - 10, arrowY + 18)
+      ..lineTo(arrowX + 10, arrowY + 18)
+      ..close();
+    canvas.drawPath(path, arrowPaint);
+    // Small direction dot at tip for visibility
+    canvas.drawCircle(Offset(arrowX, arrowY), 3.5, arrowPaint..style = PaintingStyle.fill);
   }
 
   @override

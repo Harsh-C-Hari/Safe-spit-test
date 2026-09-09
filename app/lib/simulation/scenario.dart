@@ -22,6 +22,8 @@ class ScenarioInput {
   final double windSpeedKmh;
   final double windDirectionDeg;
   final double targetDistanceM;
+  final String seatSide; // 'driver' or 'passenger'
+  final bool isFacingBackwards;
   final String mode; // 'precision', 'crosswind', 'target_strike', etc.
 
   const ScenarioInput({
@@ -36,6 +38,8 @@ class ScenarioInput {
     this.windSpeedKmh = 0.0,
     this.windDirectionDeg = 0.0,
     this.targetDistanceM = 50.0,
+    this.seatSide = 'driver',
+    this.isFacingBackwards = false,
     this.mode = 'precision',
   });
 
@@ -52,6 +56,8 @@ class ScenarioInput {
       windSpeedKmh: (json['windSpeedKmh'] as num?)?.toDouble() ?? 0.0,
       windDirectionDeg: (json['windDirectionDeg'] as num?)?.toDouble() ?? 0.0,
       targetDistanceM: (json['targetDistanceM'] as num?)?.toDouble() ?? 50.0,
+      seatSide: json['seatSide'] as String? ?? 'driver',
+      isFacingBackwards: json['isFacingBackwards'] as bool? ?? false,
       mode: json['mode'] as String? ?? 'precision',
     );
   }
@@ -68,6 +74,8 @@ class ScenarioInput {
         'windSpeedKmh': windSpeedKmh,
         'windDirectionDeg': windDirectionDeg,
         'targetDistanceM': targetDistanceM,
+        'seatSide': seatSide,
+        'isFacingBackwards': isFacingBackwards,
         'mode': mode,
       };
 }

@@ -48,10 +48,11 @@ ScoreBreakdown computeScore({
       .round();
 
   // ── Impact score (wind deviation — closer to target = higher score) ───────
+  final double deviationRange = ScoringConstants.maxDeviationM - ScoringConstants.perfectDeviationM;
   final double normalizedDeviation =
       (deviationM.abs() - ScoringConstants.perfectDeviationM)
-          .clamp(0.0, ScoringConstants.maxDeviationM) /
-          ScoringConstants.maxDeviationM;
+          .clamp(0.0, deviationRange) /
+          deviationRange;
   final int impact =
       ((1.0 - normalizedDeviation) * ScoringConstants.maxImpactScore).round();
 

@@ -20,6 +20,7 @@ import '../sensors/normalized_telemetry.dart';
 import '../simulation/scenario.dart';
 import '../simulation/trajectory_model.dart';
 import '../simulation/vehicle_profiles.dart';
+import '../simulation/safe_spit_calculator.dart';
 import '../services/audio_service.dart';
 import '../services/haptic_service.dart';
 import 'missile_lock_reticle_painter.dart';
@@ -152,6 +153,7 @@ class _HudScreenState extends State<HudScreen>
                     trajectoryPoints: trajectory,
                     deviationM: simResult?.deviationM,
                     animValue: _pulseController.value,
+                    seatSide: gameState.seatSide,
                   ),
                   size: MediaQuery.of(context).size,
                 ),
@@ -179,6 +181,14 @@ class _HudScreenState extends State<HudScreen>
                   top: 80,
                   right: 16,
                   child: _buildDemoModeIndicator(),
+                ),
+
+              // ── REAR-FACING indicator ────────────────────────────────────
+              if (gameState.isFacingBackwards)
+                Positioned(
+                  top: telemetry.isDemoMode ? 120 : 80,
+                  right: 16,
+                  child: _buildRearFacingIndicator(),
                 ),
 
               // ── LAUNCH button (visible when locked) ──────────────────────
@@ -354,6 +364,11 @@ class _HudScreenState extends State<HudScreen>
                   ),
                   tileColor: isSelected ? kTacticalGreen : Colors.transparent,
                   onTap: () {
+                    if (!profile.eitherSide) {
+                      Navigator.pop(context);
+                      _askSide(context, gameState, profile);
+                      return;
+                    }
                     gameState.selectVehicle(profile);
                     Navigator.pop(context);
                   },
@@ -368,6 +383,41 @@ class _HudScreenState extends State<HudScreen>
 
   // ── RULE 8: Demo Mode indicator ──────────────────────────────────────────
 
+  void _askSide(BuildContext context, GameState gameState, VehicleProfile profile) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.black.withValues(alpha: 0.9),
+      builder: (sheetContext) => Container(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('SELECT SIDE — ${profile.displayName.toUpperCase()}', style: _bigHudStyle(size: 14)),
+            const SizedBox(height: 12),
+            Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
+              ElevatedButton(
+                onPressed: () {
+                  gameState.selectVehicle(profile);
+                  gameState.setSeatSide('driver');
+                  Navigator.pop(sheetContext); // close side sheet
+                },
+                child: const Text('DRIVER SIDE'),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  gameState.selectVehicle(profile);
+                  gameState.setSeatSide('passenger');
+                  Navigator.pop(sheetContext); // close side sheet
+                },
+                child: const Text('PASSENGER SIDE'),
+              ),
+            ]),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildDemoModeIndicator() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -381,6 +431,26 @@ class _HudScreenState extends State<HudScreen>
           color: kTacticalGreen,
           fontFamily: 'SpaceMono',
           fontSize: 10,
+          letterSpacing: 2,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRearFacingIndicator() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.amber.withValues(alpha: 0.8)),
+        color: Colors.black.withValues(alpha: 0.7),
+      ),
+      child: const Text(
+        'REAR-FACING',
+        style: TextStyle(
+          color: Colors.amber,
+          fontFamily: 'SpaceMono',
+          fontSize: 10,
+          fontWeight: FontWeight.bold,
           letterSpacing: 2,
         ),
       ),
