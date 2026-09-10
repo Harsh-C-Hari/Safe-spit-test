@@ -173,6 +173,7 @@ class _HudScreenState extends State<HudScreen>
                     lockState: lockState,
                     lockQuality: lockQuality,
                     deltaDeg: simResult?.deltaDeg ?? 0.0,
+                    rollDeg: telemetry.rollDeg,
                     isDemoMode: telemetry.isDemoMode,
                     trajectoryPoints: trajectory,
                     deviationM: simResult?.deviationM,
@@ -388,29 +389,34 @@ class _HudScreenState extends State<HudScreen>
                 style: _bigHudStyle(size: 16),
               ),
               const SizedBox(height: 16),
-              ...VehicleProfiles.all.map((profile) {
-                final bool isSelected = profile.id == gameState.vehicle.id;
-                return ListTile(
-                  title: Text(
-                    profile.displayName.toUpperCase(),
-                    style: TextStyle(
-                      color: isSelected ? Colors.black : kTacticalGreen,
-                      fontFamily: 'SpaceMono',
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                    ),
-                  ),
-                  tileColor: isSelected ? kTacticalGreen : Colors.transparent,
-                  onTap: () {
-                    if (!profile.eitherSide) {
-                      Navigator.of(context).pop();
-                      _askSide(context, gameState, profile);
-                      return;
-                    }
-                    gameState.selectVehicle(profile);
-                    Navigator.of(context).pop();
-                  },
-                );
-              }),
+              Expanded(
+                child: ListView(
+                  shrinkWrap: true,
+                  children: VehicleProfiles.all.map((profile) {
+                    final bool isSelected = profile.id == gameState.vehicle.id;
+                    return ListTile(
+                      title: Text(
+                        profile.displayName.toUpperCase(),
+                        style: TextStyle(
+                          color: isSelected ? Colors.black : kTacticalGreen,
+                          fontFamily: 'SpaceMono',
+                          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                        ),
+                      ),
+                      tileColor: isSelected ? kTacticalGreen : Colors.transparent,
+                      onTap: () {
+                        if (!profile.eitherSide) {
+                          Navigator.of(context).pop();
+                          _askSide(context, gameState, profile);
+                          return;
+                        }
+                        gameState.selectVehicle(profile);
+                        Navigator.of(context).pop();
+                      },
+                    );
+                  }).toList(),
+                ),
+              ),
             ],
           ),
         );
@@ -435,10 +441,10 @@ class _HudScreenState extends State<HudScreen>
               ElevatedButton(
                 onPressed: () {
                   gameState.selectVehicle(profile);
-                  gameState.setSeatSide('driver');
+                  gameState.setSeatSide('driver'); // Internal logic still driver/passenger
                   Navigator.of(context).pop(); // close side sheet
                 },
-                child: const Text('DRIVER SIDE'),
+                child: const Text('RIGHT SIDE'),
               ),
               ElevatedButton(
                 onPressed: () {
@@ -446,7 +452,7 @@ class _HudScreenState extends State<HudScreen>
                   gameState.setSeatSide('passenger');
                   Navigator.of(context).pop(); // close side sheet
                 },
-                child: const Text('PASSENGER SIDE'),
+                child: const Text('LEFT SIDE'),
               ),
             ]),
           ],

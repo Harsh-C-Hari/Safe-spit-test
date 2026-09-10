@@ -120,6 +120,7 @@ class GameState extends ChangeNotifier {
       vehicle: _vehicle,
       speedKmh: telemetry.speedKmh,
       pitchDeg: telemetry.pitchDeg,
+      rollDeg: telemetry.rollDeg,
       windSpeedKmh: 0.0, // TODO: derive from seed in Phase 4 full impl
       windDirectionDeg: 0.0,
       seatSide: _seatSide,

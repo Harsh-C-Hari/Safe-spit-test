@@ -13,30 +13,30 @@ import 'package:safespit/simulation/vehicle_profiles.dart';
 void main() {
   group('SafeSpitCalculator — PROVEN formula', () {
     // ── TV-01: Zero speed ───────────────────────────────────────────────────
-    test('TV-01: targetPitch(0) == 45.0 (proven)', () {
-      expect(SafeSpitCalculator.targetPitch(0.0), equals(45.0));
+    test('TV-01: targetPitch(0) == 90.0 (proven)', () {
+      expect(SafeSpitCalculator.targetPitch(0.0), equals(90.0));
     });
 
     // ── TV-02: 50 km/h ──────────────────────────────────────────────────────
-    test('TV-02: targetPitch(50) == 57.0 (proven)', () {
-      expect(SafeSpitCalculator.targetPitch(50.0), equals(57.0));
+    test('TV-02: targetPitch(50) == 70.0 (proven)', () {
+      expect(SafeSpitCalculator.targetPitch(50.0), equals(70.0));
     });
 
     // ── TV-03: 200 km/h clamp ───────────────────────────────────────────────
-    test('TV-03: targetPitch(200) == 85.0 (proven, clamp)', () {
-      expect(SafeSpitCalculator.targetPitch(200.0), equals(85.0));
+    test('TV-03: targetPitch(200) == 10.0 (proven, clamp)', () {
+      expect(SafeSpitCalculator.targetPitch(200.0), equals(10.0));
     });
 
     // ── TV-07: Negative speed clamped (D-14, Rule 16) ───────────────────────
-    test('TV-07: targetPitch(-10) == 45.0 (negative speed clamped)', () {
-      expect(SafeSpitCalculator.targetPitch(-10.0), equals(45.0));
+    test('TV-07: targetPitch(-10) == 90.0 (negative speed clamped)', () {
+      expect(SafeSpitCalculator.targetPitch(-10.0), equals(90.0));
     });
 
     // ── TV-08: Car identity profile (D-4, Rule 20) ──────────────────────────
-    test('TV-08: Car profile is identity — targetPitch(100, car) == 69.0', () {
+    test('TV-08: Car profile is identity — targetPitch(100, car) == 50.0', () {
       expect(
         SafeSpitCalculator.targetPitch(100.0, vehicle: VehicleProfiles.car),
-        equals(69.0),
+        equals(50.0),
       );
     });
 
@@ -46,25 +46,25 @@ void main() {
       final r1 = SafeSpitCalculator.targetPitch(speed);
       final r2 = SafeSpitCalculator.targetPitch(speed);
       expect(r1, equals(r2));
-      expect(r1, closeTo(63.0, 1e-6)); // 45 + (75/5)*1.2 = 63.0
+      expect(r1, closeTo(60.0, 1e-6)); // 90 - (75/5)*2.0 = 60.0
     });
 
     // ── Additional coverage ──────────────────────────────────────────────────
-    test('clamp lower: targetPitch(0) never below 45.0', () {
+    test('clamp lower: targetPitch(300) never below 10.0', () {
+      expect(SafeSpitCalculator.targetPitch(300.0), equals(10.0));
+    });
+
+    test('clamp upper: targetPitch(0) never above 90.0', () {
       for (double v = -100; v <= 0; v += 10) {
-        expect(SafeSpitCalculator.targetPitch(v), greaterThanOrEqualTo(45.0));
+        expect(SafeSpitCalculator.targetPitch(v), lessThanOrEqualTo(90.0));
       }
     });
 
-    test('clamp upper: targetPitch(300) never above 85.0', () {
-      expect(SafeSpitCalculator.targetPitch(300.0), equals(85.0));
-    });
-
-    test('monotonically non-decreasing from 0 to 200', () {
-      double prev = 45.0;
+    test('monotonically non-increasing from 0 to 200', () {
+      double prev = 90.0;
       for (double v = 0; v <= 200; v += 5) {
         final pitch = SafeSpitCalculator.targetPitch(v);
-        expect(pitch, greaterThanOrEqualTo(prev));
+        expect(pitch, lessThanOrEqualTo(prev));
         prev = pitch;
       }
     });
@@ -73,10 +73,10 @@ void main() {
   group('SafeSpitCalculator — isClearToEject (PROVEN tolerance)', () {
     // ── TV-04: Just inside tolerance ────────────────────────────────────────
     test('TV-04: deltaDeg=4.9 → isClearToEject=true', () {
-      // targetPitch(50) = 57.0; actualPitch = 52.1 → delta = 4.9
+      // targetPitch(50) = 70.0; actualPitch = 65.1 → delta = 4.9
       expect(
         SafeSpitCalculator.isClearToEject(
-            actualPitchDeg: 52.1, targetPitchDeg: 57.0, speedKmh: 50.0),
+            actualPitchDeg: 65.1, targetPitchDeg: 70.0, speedKmh: 50.0),
         isTrue,
       );
     });
@@ -85,7 +85,7 @@ void main() {
     test('TV-05: deltaDeg=5.0 → isClearToEject=true (inclusive)', () {
       expect(
         SafeSpitCalculator.isClearToEject(
-            actualPitchDeg: 52.0, targetPitchDeg: 57.0, speedKmh: 50.0),
+            actualPitchDeg: 65.0, targetPitchDeg: 70.0, speedKmh: 50.0),
         isTrue,
       );
     });
@@ -94,7 +94,7 @@ void main() {
     test('TV-06: deltaDeg=5.1 → isClearToEject=false', () {
       expect(
         SafeSpitCalculator.isClearToEject(
-            actualPitchDeg: 51.9, targetPitchDeg: 57.0, speedKmh: 50.0),
+            actualPitchDeg: 64.9, targetPitchDeg: 70.0, speedKmh: 50.0),
         isFalse,
       );
     });
@@ -102,8 +102,48 @@ void main() {
     test('exact match: actualPitch == targetPitch → locked', () {
       expect(
         SafeSpitCalculator.isClearToEject(
-            actualPitchDeg: 57.0, targetPitchDeg: 57.0, speedKmh: 50.0),
+            actualPitchDeg: 70.0, targetPitchDeg: 70.0, speedKmh: 50.0),
         isTrue,
+      );
+    });
+
+    test('targetPitch > 135 requires strict roll (roll > 15 fails)', () {
+      expect(
+        SafeSpitCalculator.isClearToEject(
+            actualPitchDeg: 180.0, targetPitchDeg: 180.0, speedKmh: 0.0, rollDeg: 20.0),
+        isFalse, // Fails due to roll
+      );
+    });
+
+    test('targetPitch > 135 passes if roll <= 15', () {
+      expect(
+        SafeSpitCalculator.isClearToEject(
+            actualPitchDeg: 180.0, targetPitchDeg: 180.0, speedKmh: 0.0, rollDeg: 10.0),
+        isTrue,
+      );
+    });
+  });
+
+  group('SafeSpitCalculator — vertical modifiers (NEW)', () {
+    test('Still profile gives 180 target pitch', () {
+      expect(
+        SafeSpitCalculator.targetPitch(0.0, vehicle: VehicleProfiles.still),
+        equals(180.0),
+      );
+    });
+
+    test('Walking profile at low speed gives 180 target pitch', () {
+      expect(
+        SafeSpitCalculator.targetPitch(4.0, vehicle: VehicleProfiles.walking),
+        equals(180.0),
+      );
+    });
+    
+    test('Walking profile at moderate speed gives upward pitch angled forward', () {
+      // 180.0 - ((10.0 - 5.0) * 6.0) = 150.0
+      expect(
+        SafeSpitCalculator.targetPitch(10.0, vehicle: VehicleProfiles.walking),
+        equals(150.0),
       );
     });
   });
@@ -118,20 +158,19 @@ void main() {
       }
     });
 
-    // Bus has a higher turbulenceFactor — should give higher pitch at same speed
-    test('Bus: higher turbulenceFactor gives higher pitch (fictional)', () {
+    // Bus has a higher turbulenceFactor — should give lower pitch at same speed (more forward)
+    test('Bus: higher turbulenceFactor gives lower pitch (fictional)', () {
       final carPitch = SafeSpitCalculator.targetPitch(50.0, vehicle: VehicleProfiles.car);
       final busPitch = SafeSpitCalculator.targetPitch(50.0, vehicle: VehicleProfiles.bus);
-      expect(busPitch, greaterThan(carPitch));
+      expect(busPitch, lessThan(carPitch));
     });
 
-    // All vehicles: result still clamped within [45, 85]
-    test('All vehicles: result always within [45, 85]', () {
+    test('All vehicles: result always within [10, 180]', () {
       for (final vehicle in VehicleProfiles.all) {
         for (double v = 0; v <= 300; v += 50) {
           final pitch = SafeSpitCalculator.targetPitch(v, vehicle: vehicle);
-          expect(pitch, greaterThanOrEqualTo(45.0));
-          expect(pitch, lessThanOrEqualTo(85.0));
+          expect(pitch, greaterThanOrEqualTo(10.0));
+          expect(pitch, lessThanOrEqualTo(180.0));
         }
       }
     });

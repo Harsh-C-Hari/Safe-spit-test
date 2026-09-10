@@ -34,6 +34,7 @@ class SensorManager {
   // ── Internal state ────────────────────────────────────────────────────────
   double _speedKmh = 0.0;
   double _pitchDeg = 45.0; // SENSOR_SPEC.md: default to 45° (optimal) not 0°
+  double _rollDeg = 0.0;
   DateTime? _lastGyroTime;
   double? _gpsHeading;
   double? _compassHeading;
@@ -131,10 +132,15 @@ class SensorManager {
             // PROVEN: dt from Duration.inMicroseconds
             final double dt =
                 now.difference(_lastGyroTime!).inMicroseconds / 1e6;
-            // PROVEN: integrate Y-axis angular velocity (pitch)
+            // FIX: pitch uses X-axis (forward/backward tilt)
             final double deltaPitch =
-                event.y * (180.0 / math.pi) * dt;
+                event.x * (180.0 / math.pi) * dt;
             _pitchDeg = (_pitchDeg + deltaPitch).clamp(0.0, 180.0);
+            
+            // NEW: roll uses Y-axis (left/right tilt)
+            final double deltaRoll =
+                event.y * (180.0 / math.pi) * dt;
+            _rollDeg = (_rollDeg + deltaRoll).clamp(-180.0, 180.0);
           }
           _lastGyroTime = now;
           _gyroHealth = SensorHealthStatus.ok;
@@ -194,6 +200,7 @@ class SensorManager {
     _controller.add(NormalizedTelemetry(
       speedKmh: _speedKmh,
       pitchDeg: _pitchDeg,
+      rollDeg: _rollDeg,
       yawDeg: _compassHeading ?? 0.0,
       headingDeg: _gpsHeading, // Real GPS heading (null if never moved)
       anchorCompassHeading: _anchorCompassHeading, // Compass heading when stopped

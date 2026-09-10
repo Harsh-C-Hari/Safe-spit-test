@@ -66,7 +66,7 @@ class VehicleProfiles {
     windSensitivity: 1.2,
     difficulty: 0.5,
   );
-  /// Tractor — very high turbulence, unpredictable angle.
+  /// Tractor ï¿½ very high turbulence, unpredictable angle.
   static const VehicleProfile tractor = VehicleProfile(
     id: 'tractor',
     displayName: 'Tractor',
@@ -76,7 +76,7 @@ class VehicleProfiles {
     difficulty: 0.8,
   );
 
-  /// Aircraft — high speed, low ground turbulence, high wind at altitude.
+  /// Aircraft ï¿½ high speed, low ground turbulence, high wind at altitude.
   static const VehicleProfile aircraft = VehicleProfile(
     id: 'aircraft',
     displayName: 'Aircraft',
@@ -86,7 +86,7 @@ class VehicleProfiles {
     difficulty: 0.7,
   );
 
-  /// Walking — very low speed, high directional variability.
+  /// Walking - very low speed, high directional variability.
   static const VehicleProfile walking = VehicleProfile(
     id: 'walking',
     displayName: 'Walking',
@@ -97,8 +97,19 @@ class VehicleProfiles {
     eitherSide: true,
   );
 
+  /// Still - stationary, zero aerodynamic forces.
+  static const VehicleProfile still = VehicleProfile(
+    id: 'still',
+    displayName: 'Still',
+    turbulenceFactor: 0.0,
+    angleBias: 0.0,
+    windSensitivity: 0.5,
+    difficulty: 0.1,
+    eitherSide: true,
+  );
+
   /// All available vehicles for the reference build (Phase 8).
-  static const List<VehicleProfile> all = [car, bus, bike, auto, train, tractor, aircraft, walking];
+  static const List<VehicleProfile> all = [car, bus, bike, auto, train, tractor, aircraft, walking, still];
 
   /// Find a profile by id (case-insensitive). Returns [car] if not found.
   static VehicleProfile byId(String id) {

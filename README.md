@@ -13,10 +13,17 @@
 SAFE//SPIT is a deliberately over-engineered tactical aerospace instrumentation system for calculating the optimal angle to spit out of a moving vehicle. It fuses real hardware telemetry into a fighter-jet style targeting HUD.
 
 ### The Problem (that doesn't exist)
-Expectorating from a moving vehicle is an inexact science fraught with fluid blowback, boundary-layer eddy recirculation, and catastrophic aerodynamic miscalculations. Thousands of theoretical drops of saliva are lost daily to the wind due to poor trajectory planning. 
+Expectorating from a moving vehicle is an inexact science fraught with fluid blowback, boundary-layer eddy recirculation, and catastrophic aerodynamic miscalculations. Thousands of theoretical drops of saliva are lost daily to the wind due to poor trajectory planning. People simply don't know the mathematically perfect angle to spit such that it curves beautifully in the wind and hits them directly in the face. 
 
 ### The Solution (that nobody asked for)
-A highly tactical, hardware-driven aerospace HUD that uses your phone's real-time GPS velocity, compass heading, and gyroscope pitch to lock onto the perfect fluid ejection vector. When your phone aligns with the optimal aerodynamic angle, you receive a full "missile-lock" audio/visual/haptic confirmation.
+**SAFE//SPIT**: A highly tactical, hardware-driven aerospace HUD that uses your phone's real-time GPS velocity, compass heading, and gyroscope pitch to lock onto the perfect fluid ejection vector. 
+
+Featuring the proprietary **Direct Hit Protocol**, our physics engine inverted standard safety calculations to guarantee that you spit directly onto yourself. Whether you are in a high-speed vehicle or perfectly still (using our new **Vertical Anti-Gravity Calculations**), the app will guide your face to the exact angle required for a catastrophic self-hit. When your phone aligns with the optimal aerodynamic angle, you receive a full "missile-lock" audio/visual/haptic confirmation.
+
+### Features
+* **Direct Hit Protocol:** The physics engine ensures you will always find the perfect angle to hit yourself.
+* **Vertical Anti-Gravity Calculations:** Stand still or walk and the HUD locks onto 180° for the perfect vertical self-splatter.
+* **Classified AR Targeting Prototype (Suspended):** We previously explored a fully projected 3D spit-arc simulation in Augmented Reality. Due to excessive realism and safety concerns of rendering fluids in the living room, this module has been temporarily suspended (but the code remains untouched for the brave).
 
 ## Technical Details
 ### Technologies/Components Used

@@ -33,6 +33,7 @@ class MissileLockReticlePainter extends CustomPainter {
   final SpitLockState lockState;
   final double lockQuality; // 0.0..1.0
   final double deltaDeg;
+  final double rollDeg;
   final bool isDemoMode;
   final String seatSide; // driver/passenger
 
@@ -50,6 +51,7 @@ class MissileLockReticlePainter extends CustomPainter {
     required this.lockState,
     required this.lockQuality,
     required this.deltaDeg,
+    this.rollDeg = 0.0,
     required this.isDemoMode,
     this.seatSide = 'driver',
     this.trajectoryPoints,
@@ -89,7 +91,7 @@ class MissileLockReticlePainter extends CustomPainter {
 
     // ── AIM GUIDE ARROW (hidden when locked) ────────────────────────────────
     if (lockState != SpitLockState.locked) {
-      _drawAimArrow(canvas, size, cx, cy, deltaDeg, speedKmh, actualPitchDeg, targetPitchDeg, seatSide: seatSide);
+      _drawAimArrow(canvas, size, cx, cy, deltaDeg, speedKmh, actualPitchDeg, targetPitchDeg, rollDeg, seatSide: seatSide);
     }
 
     // ── PROVEN: Corner brackets ────────────────────────────────────────────
@@ -276,26 +278,59 @@ class MissileLockReticlePainter extends CustomPainter {
   }
 
   void _drawAimArrow(Canvas canvas, Size size, double cx, double cy,
-      double deltaDeg, double speedKmh, double actualPitch, double targetPitch,
+      double deltaDeg, double speedKmh, double actualPitch, double targetPitch, double rollDeg,
       {String seatSide = 'driver'}) {
-    final bool isLeft = seatSide == 'passenger'; // India: driver right, passenger left
     final Paint arrowPaint = Paint()
       ..color = kTacticalGreen.withValues(alpha: 0.85)
       ..style = PaintingStyle.fill;
-    // Arrow points toward selected side; offset direction based on seatSide
-    double offset = (deltaDeg / 3.0).clamp(-35.0, 35.0);
-    offset *= (speedKmh / 30.0).clamp(0.5, 2.0);
-    if (!isLeft) offset = -offset; // passenger = opposite side
-    final double arrowX = cx + offset;
-    final double arrowY = cy - 55; // above center pad
-    final Path path = Path()
-      ..moveTo(arrowX, arrowY)
-      ..lineTo(arrowX - 10, arrowY + 18)
-      ..lineTo(arrowX + 10, arrowY + 18)
-      ..close();
+
+    // Positive pitchDiff means target is above actual (need to tilt UP)
+    // Negative pitchDiff means target is below actual (need to tilt DOWN)
+    final double pitchDiff = targetPitch - actualPitch;
+    final bool pointUp = pitchDiff >= 0;
+
+    // Calculate vertical offset based on error magnitude
+    // Keep a minimum of 55px from center so it doesn't overlap the reticle
+    double offsetMagnitude = (pitchDiff.abs() / 2.0).clamp(0.0, 80.0);
+    // Add speed factor to make it more sensitive at higher speeds (if speed > 0)
+    if (speedKmh > 5.0) {
+      offsetMagnitude *= (speedKmh / 30.0).clamp(0.5, 2.0);
+    }
+    
+    // Position vertically
+    double arrowX = cx;
+    final double arrowY = pointUp ? cy - 55 - offsetMagnitude : cy + 55 + offsetMagnitude;
+
+    // If target is vertical (>135), we also need strict roll guidance (roll must be <= 15).
+    // Show horizontal deviation if roll is off.
+    if (targetPitch > 135.0) {
+      double r = rollDeg % 360.0;
+      if (r > 180) r -= 360.0;
+      // If r is positive, phone is tilted right. Target is left.
+      // So move arrow left.
+      arrowX -= (r * 2.0).clamp(-80.0, 80.0);
+    }
+
+    final Path path = Path();
+    if (pointUp) {
+      // Triangle pointing UP
+      path
+        ..moveTo(arrowX, arrowY) // tip
+        ..lineTo(arrowX - 10, arrowY + 18)
+        ..lineTo(arrowX + 10, arrowY + 18)
+        ..close();
+    } else {
+      // Triangle pointing DOWN
+      path
+        ..moveTo(arrowX, arrowY) // tip
+        ..lineTo(arrowX - 10, arrowY - 18)
+        ..lineTo(arrowX + 10, arrowY - 18)
+        ..close();
+    }
+    
     canvas.drawPath(path, arrowPaint);
     // Small direction dot at tip for visibility
-    canvas.drawCircle(Offset(arrowX, arrowY), 3.5, arrowPaint..style = PaintingStyle.fill);
+    canvas.drawCircle(Offset(arrowX, arrowY), 3.5, arrowPaint);
   }
 
   @override
@@ -306,6 +341,7 @@ class MissileLockReticlePainter extends CustomPainter {
         oldDelegate.speedKmh != speedKmh ||
         oldDelegate.lockState != lockState ||
         oldDelegate.lockQuality != lockQuality ||
+        oldDelegate.rollDeg != rollDeg ||
         oldDelegate.animValue != animValue ||
         oldDelegate.isDemoMode != isDemoMode;
   }

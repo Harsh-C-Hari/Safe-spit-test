@@ -18,33 +18,46 @@
 /// PROVEN core calculator. Preserved from the prototype.
 /// Pure function — no side effects, no imports beyond dart:math.
 class SafeSpitCalculator {
-  // ── PROVEN constants ───────────────────────────────────────────────────────
-  static const double baseAngle = 45.0; // degrees
-  static const double maxAngle = 85.0; // degrees
-  static const double tiltPerSpeedStep = 1.2; // degrees per speed-step
+  // ── TACTICAL "HIT YOURSELF" CONSTANTS ──────────────────────────────────────
+  static const double baseAngle = 90.0; // degrees (straight out, into the wind)
+  static const double minAngle = 10.0; // degrees (pointed aggressively forward/down)
+  static const double maxAngle = 90.0; // degrees
+  static const double tiltPerSpeedStep = 2.0; // degrees per speed-step
   static const double speedStepKmh = 5.0; // km/h per step
   static const double lockToleranceDeg = 5.0; // PROVEN: |Δθ| <= 5.0 → locked
   static const double relaxedToleranceDeg = 15.0; // rear-facing tolerance
 
-  // ── PROVEN formula ─────────────────────────────────────────────────────────
+  // ── INVERTED FORMULA ───────────────────────────────────────────────────────
 
   /// Compute the target pitch for a given speed [speedKmh] and [vehicle].
   ///
-  /// [speedKmh] is clamped to >= 0 before computation (D-14, TV-07).
-  ///
-  /// With the Car profile (turbulenceFactor=1.0, angleBias=0.0) this reproduces
-  /// the proven prototype formula exactly (D-4, TV-08).
+  /// This formula has been deliberately inverted to calculate the exact angle
+  /// required to spit forward into the slipstream and guarantee hitting yourself.
   static double targetPitch(double speedKmh, {VehicleProfile? vehicle, bool isFacingBackwards = false}) {
-    // If facing backwards, relative wind is pushing spit away. No need to tilt up.
-    if (isFacingBackwards) return baseAngle;
+    // If facing backwards, relative wind is already pushing spit away,
+    // so to hit yourself you must point it aggressively forward. 
+    if (isFacingBackwards) return minAngle;
 
     // Rule 16 / D-14: Clamp negative speed.
     final double v = speedKmh < 0 ? 0 : speedKmh;
+
+    // NEW: Vertical Spit logic for still/walking
+    // Increase threshold to 5.0 to absorb GPS noise for gentle walking.
+    if (vehicle?.id == 'still' || (vehicle?.id == 'walking' && v <= 5.0)) {
+      return 180.0; // Straight up (parallel to ground)
+    }
+    if (vehicle?.id == 'walking') {
+      // Spit upwards, but steadily decrease to 90.0 (vertical to path) as speed approaches 20 km/h
+      // Scale from 180.0 starting at v=5.0, reaching 90.0 at v=20.0
+      return (180.0 - ((v - 5.0) * 6.0)).clamp(90.0, 180.0);
+    }
+
     final double tf = vehicle?.turbulenceFactor ?? 1.0;
     final double bias = vehicle?.angleBias ?? 0.0;
 
-    final double raw = baseAngle + (v / speedStepKmh) * tiltPerSpeedStep * tf + bias;
-    return raw.clamp(baseAngle, maxAngle);
+    // Inverted logic: Subtract angle as speed increases to point forward into the wind
+    final double raw = baseAngle - (v / speedStepKmh) * tiltPerSpeedStep * tf - bias;
+    return raw.clamp(minAngle, maxAngle);
   }
 
   /// Lock tolerance check (PROVEN).
@@ -55,12 +68,23 @@ class SafeSpitCalculator {
     required double actualPitchDeg,
     required double targetPitchDeg,
     required double speedKmh,
+    double rollDeg = 0.0,
     bool isFacingBackwards = false,
   }) {
     final double delta = (actualPitchDeg - targetPitchDeg).abs();
     // At very low speeds (< 2.0 km/h), aerodynamic danger is ~0. Apply relaxed tolerance.
     final bool useRelaxed = isFacingBackwards || speedKmh < 2.0;
-    return delta <= (useRelaxed ? relaxedToleranceDeg : lockToleranceDeg);
+    final bool pitchLocked = delta <= (useRelaxed ? relaxedToleranceDeg : lockToleranceDeg);
+
+    // If target pitch is > 135 (pointing UP), we must enforce strict roll
+    // to ensure they aren't pointing it sideways while aimed "up".
+    if (targetPitchDeg > 135.0) {
+      double r = rollDeg % 360.0;
+      if (r > 180) r -= 360.0;
+      if (r.abs() > 15.0) return false;
+    }
+
+    return pitchLocked;
   }
 
   /// Delta in degrees between actual and target pitch.

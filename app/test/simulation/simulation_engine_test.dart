@@ -31,36 +31,36 @@ void main() {
     }
 
     // TV-01
-    test('TV-01: 0 km/h → targetPitch=45.0, locked', () {
+    test('TV-01: 0 km/h → targetPitch=90.0, locked', () {
       final result = simulate(_carScenario(
-          seed: '000000', speedKmh: 0.0, pitchDeg: 45.0));
-      expect(result.targetPitchDeg, closeTo(45.0, 1e-6));
+          seed: '000000', speedKmh: 0.0, pitchDeg: 90.0));
+      expect(result.targetPitchDeg, closeTo(90.0, 1e-6));
       expect(result.deltaDeg, closeTo(0.0, 1e-6));
       expect(result.isClearToEject, isTrue);
     });
 
     // TV-02
-    test('TV-02: 50 km/h → targetPitch=57.0, locked', () {
+    test('TV-02: 50 km/h → targetPitch=70.0, locked', () {
       final result = simulate(_carScenario(
-          seed: '000001', speedKmh: 50.0, pitchDeg: 57.0));
-      expect(result.targetPitchDeg, closeTo(57.0, 1e-6));
+          seed: '000001', speedKmh: 50.0, pitchDeg: 70.0));
+      expect(result.targetPitchDeg, closeTo(70.0, 1e-6));
       expect(result.deltaDeg, closeTo(0.0, 1e-6));
       expect(result.isClearToEject, isTrue);
     });
 
     // TV-03
-    test('TV-03: 200 km/h → targetPitch=85.0 (clamp), locked', () {
+    test('TV-03: 200 km/h → targetPitch=10.0 (clamp), locked', () {
       final result = simulate(_carScenario(
-          seed: '000002', speedKmh: 200.0, pitchDeg: 85.0));
-      expect(result.targetPitchDeg, closeTo(85.0, 1e-6));
+          seed: '000002', speedKmh: 200.0, pitchDeg: 10.0));
+      expect(result.targetPitchDeg, closeTo(10.0, 1e-6));
       expect(result.isClearToEject, isTrue);
     });
 
     // TV-04
     test('TV-04: deltaDeg=4.9 → isClearToEject=true', () {
       final result = simulate(_carScenario(
-          seed: '000003', speedKmh: 50.0, pitchDeg: 52.1));
-      expect(result.targetPitchDeg, closeTo(57.0, 1e-6));
+          seed: '000003', speedKmh: 50.0, pitchDeg: 65.1));
+      expect(result.targetPitchDeg, closeTo(70.0, 1e-6));
       expect(result.deltaDeg, closeTo(4.9, 1e-6));
       expect(result.isClearToEject, isTrue);
     });
@@ -68,7 +68,7 @@ void main() {
     // TV-05
     test('TV-05: deltaDeg=5.0 → isClearToEject=true (inclusive)', () {
       final result = simulate(_carScenario(
-          seed: '000004', speedKmh: 50.0, pitchDeg: 52.0));
+          seed: '000004', speedKmh: 50.0, pitchDeg: 65.0));
       expect(result.deltaDeg, closeTo(5.0, 1e-6));
       expect(result.isClearToEject, isTrue);
     });
@@ -76,34 +76,34 @@ void main() {
     // TV-06
     test('TV-06: deltaDeg=5.1 → isClearToEject=false', () {
       final result = simulate(_carScenario(
-          seed: '000005', speedKmh: 50.0, pitchDeg: 51.9));
+          seed: '000005', speedKmh: 50.0, pitchDeg: 64.9));
       expect(result.deltaDeg, closeTo(5.1, 1e-6));
       expect(result.isClearToEject, isFalse);
     });
 
     // TV-07
-    test('TV-07: negative speed clamped to 0 → targetPitch=45.0', () {
+    test('TV-07: negative speed clamped to 0 → targetPitch=90.0', () {
       final result = simulate(_carScenario(
-          seed: '000006', speedKmh: -10.0, pitchDeg: 45.0));
-      expect(result.targetPitchDeg, closeTo(45.0, 1e-6));
+          seed: '000006', speedKmh: -10.0, pitchDeg: 90.0));
+      expect(result.targetPitchDeg, closeTo(90.0, 1e-6));
       expect(result.isClearToEject, isTrue);
     });
 
     // TV-08
-    test('TV-08: Car identity at 100 km/h → targetPitch=69.0', () {
+    test('TV-08: Car identity at 100 km/h → targetPitch=50.0', () {
       final result = simulate(_carScenario(
-          seed: '000007', speedKmh: 100.0, pitchDeg: 69.0));
-      expect(result.targetPitchDeg, closeTo(69.0, 1e-6));
+          seed: '000007', speedKmh: 100.0, pitchDeg: 50.0));
+      expect(result.targetPitchDeg, closeTo(50.0, 1e-6));
     });
 
     // TV-09: Wind does NOT affect targetPitch
     test('TV-09: wind does not affect targetPitchDeg (Rule 15, D-5)', () {
       final noWind = simulate(_carScenario(
-          seed: '000001', speedKmh: 50.0, pitchDeg: 57.0));
+          seed: '000001', speedKmh: 50.0, pitchDeg: 70.0));
       final withWind = simulate(_carScenario(
           seed: '000008',
           speedKmh: 50.0,
-          pitchDeg: 57.0,
+          pitchDeg: 70.0,
           windSpeedKmh: 30.0,
           windDirectionDeg: 90.0,
           mode: 'crosswind'));
@@ -118,7 +118,7 @@ void main() {
         seed: 'ABC123',
         vehicle: VehicleProfiles.car,
         speedKmh: 75.0,
-        pitchDeg: 63.0,
+        pitchDeg: 60.0,
         windSpeedKmh: 5.0,
         windDirectionDeg: 180.0,
         mode: 'precision',
@@ -130,8 +130,8 @@ void main() {
       expect(r1.isClearToEject, equals(r2.isClearToEject));
       expect(r1.lockQuality, closeTo(r2.lockQuality, 1e-10));
       expect(r1.deviationM, closeTo(r2.deviationM, 1e-10));
-      // TV-10 expected: targetPitchDeg = 45 + 75/5*1.2 = 63.0
-      expect(r1.targetPitchDeg, closeTo(63.0, 1e-6));
+      // TV-10 expected: targetPitchDeg = 90 - 75/5*2.0 = 60.0
+      expect(r1.targetPitchDeg, closeTo(60.0, 1e-6));
     });
   });
 
@@ -141,7 +141,7 @@ void main() {
         seed: '000000',
         vehicle: VehicleProfiles.car,
         speedKmh: 50.0,
-        pitchDeg: 57.0,
+        pitchDeg: 70.0,
       ));
       expect(result.lockQuality, closeTo(1.0, 1e-6));
     });
@@ -161,7 +161,7 @@ void main() {
         seed: '000000',
         vehicle: VehicleProfiles.car,
         speedKmh: 50.0,
-        pitchDeg: 52.0, // delta=5.0, exactly at edge
+        pitchDeg: 65.0, // delta=5.0, exactly at edge
       ));
       expect(result.lockQuality, greaterThanOrEqualTo(0.0));
       expect(result.lockQuality, lessThanOrEqualTo(1.0));

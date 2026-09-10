@@ -33,6 +33,7 @@ SimulationResult simulate(ScenarioInput input) {
     actualPitchDeg: input.pitchDeg,
     targetPitchDeg: targetPitchDeg,
     speedKmh: input.speedKmh,
+    rollDeg: input.rollDeg,
     isFacingBackwards: input.isFacingBackwards,
   );
 
