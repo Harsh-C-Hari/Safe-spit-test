@@ -36,6 +36,8 @@ class HudScreen extends StatefulWidget {
 
 class _HudScreenState extends State<HudScreen>
     with TickerProviderStateMixin {
+  List<CameraDescription> _cameras = [];
+  int _selectedCameraIndex = 0;
   CameraController? _cameraController;
   bool _cameraReady = false;
   bool _cameraError = false;
@@ -77,20 +79,36 @@ class _HudScreenState extends State<HudScreen>
 
   Future<void> _initCamera() async {
     try {
-      final cameras = await availableCameras();
-      if (cameras.isEmpty) {
+      _cameras = await availableCameras();
+      if (_cameras.isEmpty) {
         setState(() => _cameraError = true);
         return;
       }
-      // PROVEN: CameraController(cameras.first, ResolutionPreset.high, enableAudio: false)
-      _cameraController = CameraController(
-        cameras.first,
-        ResolutionPreset.high,
-        enableAudio: false,
-      );
+      await _setCamera(_selectedCameraIndex);
+    } catch (e) {
+      debugPrint('[HudScreen] Camera init error: $e');
+      if (mounted) {
+        setState(() => _cameraError = true);
+      }
+    }
+  }
+
+  Future<void> _setCamera(int index) async {
+    if (_cameraController != null) {
+      await _cameraController!.dispose();
+    }
+    _cameraController = CameraController(
+      _cameras[index],
+      ResolutionPreset.high,
+      enableAudio: false,
+    );
+    try {
       await _cameraController!.initialize();
       if (mounted) {
-        setState(() => _cameraReady = true);
+        setState(() {
+          _cameraReady = true;
+          _selectedCameraIndex = index;
+        });
       }
     } catch (e) {
       debugPrint('[HudScreen] Camera error: $e'); // PROVEN debug string pattern
@@ -98,6 +116,12 @@ class _HudScreenState extends State<HudScreen>
         setState(() => _cameraError = true);
       }
     }
+  }
+
+  void _toggleCamera() {
+    if (_cameras.isEmpty) return;
+    final nextIndex = (_selectedCameraIndex + 1) % _cameras.length;
+    _setCamera(nextIndex);
   }
 
   @override
@@ -152,6 +176,10 @@ class _HudScreenState extends State<HudScreen>
                     isDemoMode: telemetry.isDemoMode,
                     trajectoryPoints: trajectory,
                     deviationM: simResult?.deviationM,
+                    phoneCompassHeading: telemetry.yawDeg,
+                    carGpsHeading: telemetry.headingDeg,
+                    anchorCompassHeading: telemetry.anchorCompassHeading,
+                    isFacingBackwards: telemetry.isFacingBackwards,
                     animValue: _pulseController.value,
                     seatSide: gameState.seatSide,
                   ),
@@ -190,6 +218,19 @@ class _HudScreenState extends State<HudScreen>
                   right: 16,
                   child: _buildRearFacingIndicator(),
                 ),
+
+              // ── CAMERA SWITCHER ──────────────────────────────────────────
+              Positioned(
+                top: telemetry.isDemoMode 
+                    ? (gameState.isFacingBackwards ? 160 : 120)
+                    : (gameState.isFacingBackwards ? 120 : 80),
+                right: 16,
+                child: IconButton(
+                  icon: const Icon(Icons.flip_camera_ios, color: kTacticalGreen),
+                  onPressed: _toggleCamera,
+                  tooltip: 'Switch Camera',
+                ),
+              ),
 
               // ── LAUNCH button (visible when locked) ──────────────────────
               if (lockState == SpitLockState.locked &&
@@ -290,7 +331,7 @@ class _HudScreenState extends State<HudScreen>
           Flexible(child: _hudText('${telemetry.speedKmh.toStringAsFixed(0)} KM/H')),
           Flexible(
             child: _hudText(
-              '${_cardinal(telemetry.headingDeg)} ${telemetry.headingDeg.toStringAsFixed(0)}°',
+              '${_cardinal(telemetry.headingDeg ?? telemetry.anchorCompassHeading ?? 0.0)} ${(telemetry.headingDeg ?? telemetry.anchorCompassHeading ?? 0.0).toStringAsFixed(0)}°',
             ),
           ),
           Flexible(
@@ -337,7 +378,7 @@ class _HudScreenState extends State<HudScreen>
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
-      builder: (BuildContext context) {
+      builder: (BuildContext sheetContext) {
         return Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
@@ -365,12 +406,12 @@ class _HudScreenState extends State<HudScreen>
                   tileColor: isSelected ? kTacticalGreen : Colors.transparent,
                   onTap: () {
                     if (!profile.eitherSide) {
-                      Navigator.pop(context);
+                      Navigator.of(context).pop();
                       _askSide(context, gameState, profile);
                       return;
                     }
                     gameState.selectVehicle(profile);
-                    Navigator.pop(context);
+                    Navigator.of(context).pop();
                   },
                 );
               }),
@@ -399,7 +440,7 @@ class _HudScreenState extends State<HudScreen>
                 onPressed: () {
                   gameState.selectVehicle(profile);
                   gameState.setSeatSide('driver');
-                  Navigator.pop(sheetContext); // close side sheet
+                  Navigator.of(context).pop(); // close side sheet
                 },
                 child: const Text('DRIVER SIDE'),
               ),
@@ -407,7 +448,7 @@ class _HudScreenState extends State<HudScreen>
                 onPressed: () {
                   gameState.selectVehicle(profile);
                   gameState.setSeatSide('passenger');
-                  Navigator.pop(sheetContext); // close side sheet
+                  Navigator.of(context).pop(); // close side sheet
                 },
                 child: const Text('PASSENGER SIDE'),
               ),

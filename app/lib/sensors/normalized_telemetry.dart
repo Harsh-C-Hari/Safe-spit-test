@@ -78,7 +78,8 @@ class NormalizedTelemetry {
   final double pitchDeg; // integrated gyro, clamped [0°, 180°]
   final double rollDeg; // PLANNED (accelerometer/gyro)
   final double yawDeg; // PLANNED (magnetometer)
-  final double headingDeg; // PLANNED (magnetometer)
+  final double? headingDeg; // PLANNED (magnetometer)
+  final double? anchorCompassHeading; // Saved compass when stopping
   final DateTime timestamp;
   final SensorHealth sensorHealth;
   final bool isDemoMode;
@@ -90,12 +91,13 @@ class NormalizedTelemetry {
     required this.pitchDeg,
     this.rollDeg = 0.0,
     this.yawDeg = 0.0,
-    this.headingDeg = 0.0,
+    this.headingDeg,
     required this.timestamp,
     required this.sensorHealth,
     this.isDemoMode = false,
     this.seatSide = 'driver',
     this.isFacingBackwards = false,
+    this.anchorCompassHeading,
   });
 
   /// Default telemetry when no sensors are available.
@@ -119,6 +121,7 @@ class NormalizedTelemetry {
     SensorHealth? sensorHealth,
     bool? isDemoMode,
     bool? isFacingBackwards,
+    double? anchorCompassHeading,
   }) {
     return NormalizedTelemetry(
       speedKmh: speedKmh ?? this.speedKmh,
@@ -130,6 +133,7 @@ class NormalizedTelemetry {
       sensorHealth: sensorHealth ?? this.sensorHealth,
       isDemoMode: isDemoMode ?? this.isDemoMode,
       isFacingBackwards: isFacingBackwards ?? this.isFacingBackwards,
+      anchorCompassHeading: anchorCompassHeading ?? this.anchorCompassHeading,
     );
   }
 }

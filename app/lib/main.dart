@@ -7,14 +7,25 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
+import 'package:camera/camera.dart';
+
 import 'game/game_state.dart';
 import 'hud/hud_screen.dart';
 import 'hud/permission_gate.dart';
 import 'screens/result_screen.dart';
 import 'screens/vehicle_select_screen.dart';
 
-void main() {
+late List<CameraDescription> globalCameras;
+
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  try {
+    globalCameras = await availableCameras();
+  } catch (e) {
+    globalCameras = [];
+    debugPrint('Camera init failed: $e');
+  }
 
   // Lock to portrait orientation for the HUD experience
   SystemChrome.setPreferredOrientations([

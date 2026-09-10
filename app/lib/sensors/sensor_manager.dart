@@ -37,6 +37,7 @@ class SensorManager {
   DateTime? _lastGyroTime;
   double? _gpsHeading;
   double? _compassHeading;
+  double? _anchorCompassHeading;
   bool _isFacingBackwards = false;
 
   SensorHealthStatus _gpsHealth = SensorHealthStatus.permissionDenied;
@@ -86,7 +87,15 @@ class SensorManager {
         (Position position) {
           // PROVEN: v_ms * 3.6 → km/h
           _speedKmh = (position.speed * 3.6).clamp(0.0, double.infinity);
-          _gpsHeading = position.heading;
+          if (_speedKmh > 5.0) {
+            _gpsHeading = position.heading;
+            _anchorCompassHeading = null; // Clear anchor when moving
+          } else {
+            // If stopped, capture an anchor
+            if (_anchorCompassHeading == null && _compassHeading != null) {
+              _anchorCompassHeading = _compassHeading;
+            }
+          }
           _checkFacingBackwards();
           _gpsHealth = SensorHealthStatus.ok;
           _emit();
@@ -181,9 +190,13 @@ class SensorManager {
 
   void _emit() {
     if (_controller.isClosed) return;
+    
     _controller.add(NormalizedTelemetry(
       speedKmh: _speedKmh,
       pitchDeg: _pitchDeg,
+      yawDeg: _compassHeading ?? 0.0,
+      headingDeg: _gpsHeading, // Real GPS heading (null if never moved)
+      anchorCompassHeading: _anchorCompassHeading, // Compass heading when stopped
       timestamp: DateTime.now(),
       sensorHealth: SensorHealth(
         gps: _gpsHealth,
