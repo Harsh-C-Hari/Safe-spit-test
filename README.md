@@ -3,12 +3,11 @@
 # SAFE//SPIT 🎯
 
 ## Basic Details
-### Team Name: [Your Team Name]
+### Team Name: Minions
 
 ### Team Members
-- Team Lead: [Name] - [College]
-- Member 2: [Name] - [College]
-- Member 3: [Name] - [College]
+- Team Lead: Alsabith KA - College of Engineering Chengannur
+- Member 2: Harsh C Hari - College of Engineering Chengannur
 
 ### Project Description
 SAFE//SPIT is a deliberately over-engineered tactical aerospace instrumentation system for calculating the optimal angle to spit out of a moving vehicle. It fuses real hardware telemetry into a fighter-jet style targeting HUD.
