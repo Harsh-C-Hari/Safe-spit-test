@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="https://via.placeholder.com/150/141414/39FF14?text=SAFE//SPIT" alt="SAFE//SPIT Logo" width="150" height="150"/>
+  <img src="docs/logo.jpg" alt="SAFE//SPIT Logo" width="250" height="250"/>
   <h1>SAFE//SPIT</h1>
   <p><strong>Tactical Aerospace Instrumentation for Automotive Expectorations.</strong></p>
 
