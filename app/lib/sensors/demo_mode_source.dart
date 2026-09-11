@@ -23,11 +23,14 @@ class DemoModeSource {
   static const double _peakSpeed = 60.0; // km/h
 
   StreamController<NormalizedTelemetry>? _controller;
-  StreamSubscription<GyroscopeEvent>? _gyroSubscription;
+  StreamSubscription<AccelerometerEvent>? _accelSubscription;
   StreamSubscription<CompassEvent>? _compassSubscription;
   
+  double _gravityX = 0.0;
+  double _gravityY = 0.0;
+  double _gravityZ = 0.0;
   double _pitchDeg = 45.0; // Start at 45 degrees
-  DateTime? _lastGyroTime;
+  double _rollDeg = 0.0;
   
   // Simulated forward path is 0° (North)
   static const double _simulatedGpsHeading = 0.0;
@@ -43,24 +46,30 @@ class DemoModeSource {
   }
 
   void _start() {
-    _lastGyroTime = null;
     _pitchDeg = 45.0;
+    _rollDeg = 0.0;
+    _gravityX = 0.0;
+    _gravityY = 0.0;
+    _gravityZ = 0.0;
 
-    // Use the real gyroscope for interactive pitch
+    // Use the real accelerometer for interactive pitch
     try {
-      _gyroSubscription = gyroscopeEventStream().listen(
-        (GyroscopeEvent event) {
-          final DateTime now = DateTime.now();
-          if (_lastGyroTime != null) {
-            final double dt = now.difference(_lastGyroTime!).inMicroseconds / 1e6;
-            final double deltaPitch = event.y * (180.0 / math.pi) * dt;
-            _pitchDeg = (_pitchDeg + deltaPitch).clamp(0.0, 180.0);
-          }
-          _lastGyroTime = now;
+      _accelSubscription = accelerometerEventStream().listen(
+        (AccelerometerEvent event) {
+          const double alpha = 0.1;
+          _gravityX = alpha * event.x + (1 - alpha) * _gravityX;
+          _gravityY = alpha * event.y + (1 - alpha) * _gravityY;
+          _gravityZ = alpha * event.z + (1 - alpha) * _gravityZ;
+
+          _pitchDeg = math.atan2(_gravityZ, _gravityY) * (180.0 / math.pi) + 90.0;
+          _pitchDeg = _pitchDeg.clamp(0.0, 180.0);
+          
+          _rollDeg = math.atan2(_gravityX, _gravityZ) * (180.0 / math.pi);
+          _rollDeg = _rollDeg.clamp(-180.0, 180.0);
+
           _emit();
         },
         onError: (_) {
-          // If gyro fails, just emit the constant values
           _emit();
         },
         cancelOnError: false,
@@ -89,11 +98,12 @@ class DemoModeSource {
     final telemetry = NormalizedTelemetry(
       speedKmh: _peakSpeed, // Constant speed
       pitchDeg: _pitchDeg,  // Real pitch
+      rollDeg: _rollDeg,    // Real roll
       timestamp: DateTime.now(),
       sensorHealth: const SensorHealth(
         gps: SensorHealthStatus.ok, // Faked
         gyro: SensorHealthStatus.ok, // Real
-        accelerometer: SensorHealthStatus.unavailable,
+        accelerometer: SensorHealthStatus.ok, // Real
         magnetometer: SensorHealthStatus.unavailable,
         camera: SensorHealthStatus.permissionDenied,
       ),
@@ -105,8 +115,8 @@ class DemoModeSource {
   }
 
   void _stop() {
-    _gyroSubscription?.cancel();
-    _gyroSubscription = null;
+    _accelSubscription?.cancel();
+    _accelSubscription = null;
     _compassSubscription?.cancel();
     _compassSubscription = null;
   }

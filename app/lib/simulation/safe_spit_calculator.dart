@@ -37,19 +37,29 @@ class SafeSpitCalculator {
     // Rule 16 / D-14: Clamp negative speed.
     final double v = speedKmh < 0 ? 0 : speedKmh;
 
-    // NEW: Vertical Spit logic for still/walking
-    // Increase threshold to 5.0 to absorb GPS noise for gentle walking.
-    if (vehicle?.id == 'still' || (vehicle?.id == 'walking' && v <= 5.0)) {
+    String activeId = vehicle?.id ?? 'car';
+    double tf = vehicle?.turbulenceFactor ?? 1.0;
+    double bias = vehicle?.angleBias ?? 0.0;
+
+    // Use speed as the first main reference to correct impossible profiles.
+    if (v > 25.0 && (activeId == 'walking' || activeId == 'still')) {
+      activeId = 'car';
+      tf = 1.0;
+      bias = 0.0;
+    } else if (v > 5.0 && activeId == 'still') {
+      activeId = 'walking';
+      tf = 1.0; // from walking profile
+      bias = -2.0; // from walking profile
+    }
+
+    if (activeId == 'still' || (activeId == 'walking' && v <= 5.0)) {
       return 0.0; // Straight UP (camera pointing at sky)
     }
-    if (vehicle?.id == 'walking') {
+    if (activeId == 'walking') {
       // Spit upwards, but steadily increase to 90.0 (straight ahead) as speed approaches 20 km/h
       // Scale from 0.0 starting at v=5.0, reaching 90.0 at v=20.0
       return (0.0 + ((v - 5.0) * 6.0)).clamp(0.0, 90.0);
     }
-
-    final double tf = vehicle?.turbulenceFactor ?? 1.0;
-    final double bias = vehicle?.angleBias ?? 0.0;
 
     if (isFacingBackwards) {
       // Backwards facing logic: Add angle as speed increases to point backwards over the shoulder.
