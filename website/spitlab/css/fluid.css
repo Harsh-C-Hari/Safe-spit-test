@@ -1,0 +1,103 @@
+/* ============================================
+   SPITLAB — fluid.css
+   Grain overlay, splatter decals, CSS-only drip fallback
+   ============================================ */
+
+/* ---------- ambient canvases (mounted once, behind content) ---------- */
+#drip-canvas,
+#hero-canvas {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  pointer-events: none;
+}
+
+#hero-canvas { position: absolute; z-index: 3; }
+
+/* ---------- grain overlay ---------- */
+#grain-overlay {
+  position: fixed;
+  inset: -20%;
+  width: 140%;
+  height: 140%;
+  z-index: 50;
+  pointer-events: none;
+  mix-blend-mode: overlay;
+  opacity: 0.05;
+  background-repeat: repeat;
+  animation: grainShift 8s steps(8) infinite;
+}
+
+@keyframes grainShift {
+  0%   { transform: translate(0,0); }
+  12%  { transform: translate(-2%,2%); }
+  24%  { transform: translate(2%,-1%); }
+  37%  { transform: translate(-1%,-2%); }
+  50%  { transform: translate(2%,2%); }
+  62%  { transform: translate(-2%,1%); }
+  75%  { transform: translate(1%,-2%); }
+  87%  { transform: translate(-2%,-1%); }
+  100% { transform: translate(0,0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #grain-overlay { animation: none; }
+}
+
+/* ---------- static splatter decals (SVG, scattered per page) ---------- */
+.splatter-field {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.splat-decal {
+  position: absolute;
+  opacity: 0.9;
+  filter: drop-shadow(0 6px 18px rgba(0,0,0,0.5));
+}
+
+.splat-decal.accent { filter: drop-shadow(0 0 22px rgba(168,162,58,0.25)) drop-shadow(0 6px 18px rgba(0,0,0,0.5)); }
+
+/* ---------- CSS fallback drips (used when reduced-motion / low-end GPU) ---------- */
+.css-drip-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  overflow: hidden;
+  display: none;
+}
+
+.css-drip-layer.is-active { display: block; }
+
+.css-drip {
+  position: absolute;
+  top: -40px;
+  width: 3px;
+  height: 90px;
+  border-radius: 3px;
+  background: linear-gradient(180deg, transparent, rgba(216,216,216,0.5) 30%, rgba(216,216,216,0.85));
+  animation: cssDripFall linear infinite;
+}
+
+.css-drip.accent {
+  background: linear-gradient(180deg, transparent, rgba(168,162,58,0.5) 30%, rgba(168,162,58,0.85));
+}
+
+@keyframes cssDripFall {
+  0%   { transform: translateY(0) scaleY(0.4); opacity: 0; }
+  10%  { opacity: 1; }
+  85%  { opacity: 1; }
+  100% { transform: translateY(60vh) scaleY(1); opacity: 0; }
+}
+
+/* ---------- reduced motion: kill heavy canvases ---------- */
+.reduced-motion #drip-canvas,
+.reduced-motion #hero-canvas {
+  display: none;
+}

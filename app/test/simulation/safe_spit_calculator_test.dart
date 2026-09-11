@@ -122,28 +122,49 @@ void main() {
         isTrue,
       );
     });
-  });
 
-  group('SafeSpitCalculator — vertical modifiers (NEW)', () {
-    test('Still profile gives 180 target pitch', () {
+    test('targetPitch < 45 passes if roll is near 180 (face down)', () {
       expect(
-        SafeSpitCalculator.targetPitch(0.0, vehicle: VehicleProfiles.still),
-        equals(180.0),
+        SafeSpitCalculator.isClearToEject(
+            actualPitchDeg: 0.0, targetPitchDeg: 0.0, speedKmh: 0.0, rollDeg: 175.0),
+        isTrue,
+      );
+      expect(
+        SafeSpitCalculator.isClearToEject(
+            actualPitchDeg: 0.0, targetPitchDeg: 0.0, speedKmh: 0.0, rollDeg: -170.0),
+        isTrue,
       );
     });
 
-    test('Walking profile at low speed gives 180 target pitch', () {
+    test('targetPitch < 45 fails if roll is far from 0 and 180', () {
+      expect(
+        SafeSpitCalculator.isClearToEject(
+            actualPitchDeg: 0.0, targetPitchDeg: 0.0, speedKmh: 0.0, rollDeg: 90.0),
+        isFalse,
+      );
+    });
+  });
+
+  group('SafeSpitCalculator — vertical modifiers (NEW)', () {
+    test('Still profile gives 0.0 target pitch (straight UP)', () {
+      expect(
+        SafeSpitCalculator.targetPitch(0.0, vehicle: VehicleProfiles.still),
+        equals(0.0),
+      );
+    });
+
+    test('Walking profile at low speed gives 0.0 target pitch', () {
       expect(
         SafeSpitCalculator.targetPitch(4.0, vehicle: VehicleProfiles.walking),
-        equals(180.0),
+        equals(0.0),
       );
     });
     
     test('Walking profile at moderate speed gives upward pitch angled forward', () {
-      // 180.0 - ((10.0 - 5.0) * 6.0) = 150.0
+      // 0.0 + ((10.0 - 5.0) * 6.0) = 30.0
       expect(
         SafeSpitCalculator.targetPitch(10.0, vehicle: VehicleProfiles.walking),
-        equals(150.0),
+        equals(30.0),
       );
     });
   });
@@ -165,11 +186,11 @@ void main() {
       expect(busPitch, lessThan(carPitch));
     });
 
-    test('All vehicles: result always within [10, 180]', () {
+    test('All vehicles: result always within [0, 180]', () {
       for (final vehicle in VehicleProfiles.all) {
         for (double v = 0; v <= 300; v += 50) {
           final pitch = SafeSpitCalculator.targetPitch(v, vehicle: vehicle);
-          expect(pitch, greaterThanOrEqualTo(10.0));
+          expect(pitch, greaterThanOrEqualTo(0.0));
           expect(pitch, lessThanOrEqualTo(180.0));
         }
       }
@@ -185,6 +206,27 @@ void main() {
       // "With wind" — targetPitch formula has no wind parameter, so result is identical.
       final withWindSpeed = SafeSpitCalculator.targetPitch(50.0);
       expect(noWind, equals(withWindSpeed));
+    });
+  });
+  group('SafeSpitCalculator — backwards facing modifiers (NEW)', () {
+    test('Backwards facing adds angle instead of subtracting', () {
+      final forward = SafeSpitCalculator.targetPitch(50.0, isFacingBackwards: false);
+      final backward = SafeSpitCalculator.targetPitch(50.0, isFacingBackwards: true);
+      // 50 km/h -> 70.0 forward, 110.0 backward
+      expect(forward, equals(70.0));
+      expect(backward, equals(110.0));
+    });
+
+    test('Backwards facing clamps at 180', () {
+      final backward = SafeSpitCalculator.targetPitch(300.0, isFacingBackwards: true);
+      // 90 + (300/5)*2 = 210, clamped to 180
+      expect(backward, equals(180.0));
+    });
+
+    test('Backwards facing identity profile', () {
+      final carBackward = SafeSpitCalculator.targetPitch(100.0, vehicle: VehicleProfiles.car, isFacingBackwards: true);
+      // 90 + (100/5)*2 = 130
+      expect(carBackward, equals(130.0));
     });
   });
 }

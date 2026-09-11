@@ -287,7 +287,9 @@ class MissileLockReticlePainter extends CustomPainter {
     // Positive pitchDiff means target is above actual (need to tilt UP)
     // Negative pitchDiff means target is below actual (need to tilt DOWN)
     final double pitchDiff = targetPitch - actualPitch;
-    final bool pointUp = pitchDiff >= 0;
+    // targetPitch < actualPitch means target is ABOVE the current aim.
+    // The arrow should point UP to tell the user to tilt UP.
+    final bool pointUp = targetPitch < actualPitch;
 
     // Calculate vertical offset based on error magnitude
     // Keep a minimum of 55px from center so it doesn't overlap the reticle
@@ -301,11 +303,21 @@ class MissileLockReticlePainter extends CustomPainter {
     double arrowX = cx;
     final double arrowY = pointUp ? cy - 55 - offsetMagnitude : cy + 55 + offsetMagnitude;
 
-    // If target is vertical (>135), we also need strict roll guidance (roll must be <= 15).
+    // If target is vertical (<45 or >135), we also need strict roll guidance (roll must be <= 15).
     // Show horizontal deviation if roll is off.
-    if (targetPitch > 135.0) {
+    if (targetPitch < 45.0 || targetPitch > 135.0) {
       double r = rollDeg % 360.0;
       if (r > 180) r -= 360.0;
+      
+      // If facing down (target near 0), "flat" means roll is ~180 or ~-180.
+      if (targetPitch < 45.0) {
+        if (r > 0) {
+          r -= 180.0;
+        } else {
+          r += 180.0;
+        }
+      }
+      
       // If r is positive, phone is tilted right. Target is left.
       // So move arrow left.
       arrowX -= (r * 2.0).clamp(-80.0, 80.0);

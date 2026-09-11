@@ -34,28 +34,31 @@ class SafeSpitCalculator {
   /// This formula has been deliberately inverted to calculate the exact angle
   /// required to spit forward into the slipstream and guarantee hitting yourself.
   static double targetPitch(double speedKmh, {VehicleProfile? vehicle, bool isFacingBackwards = false}) {
-    // If facing backwards, relative wind is already pushing spit away,
-    // so to hit yourself you must point it aggressively forward. 
-    if (isFacingBackwards) return minAngle;
-
     // Rule 16 / D-14: Clamp negative speed.
     final double v = speedKmh < 0 ? 0 : speedKmh;
 
     // NEW: Vertical Spit logic for still/walking
     // Increase threshold to 5.0 to absorb GPS noise for gentle walking.
     if (vehicle?.id == 'still' || (vehicle?.id == 'walking' && v <= 5.0)) {
-      return 180.0; // Straight up (parallel to ground)
+      return 0.0; // Straight UP (camera pointing at sky)
     }
     if (vehicle?.id == 'walking') {
-      // Spit upwards, but steadily decrease to 90.0 (vertical to path) as speed approaches 20 km/h
-      // Scale from 180.0 starting at v=5.0, reaching 90.0 at v=20.0
-      return (180.0 - ((v - 5.0) * 6.0)).clamp(90.0, 180.0);
+      // Spit upwards, but steadily increase to 90.0 (straight ahead) as speed approaches 20 km/h
+      // Scale from 0.0 starting at v=5.0, reaching 90.0 at v=20.0
+      return (0.0 + ((v - 5.0) * 6.0)).clamp(0.0, 90.0);
     }
 
     final double tf = vehicle?.turbulenceFactor ?? 1.0;
     final double bias = vehicle?.angleBias ?? 0.0;
 
-    // Inverted logic: Subtract angle as speed increases to point forward into the wind
+    if (isFacingBackwards) {
+      // Backwards facing logic: Add angle as speed increases to point backwards over the shoulder.
+      // The wind will catch it and blow it forward into the user's face.
+      final double raw = baseAngle + (v / speedStepKmh) * tiltPerSpeedStep * tf + bias;
+      return raw.clamp(90.0, 180.0);
+    }
+
+    // Forward logic: Subtract angle as speed increases to point forward into the wind
     final double raw = baseAngle - (v / speedStepKmh) * tiltPerSpeedStep * tf - bias;
     return raw.clamp(minAngle, maxAngle);
   }
@@ -77,11 +80,17 @@ class SafeSpitCalculator {
     final bool pitchLocked = delta <= (useRelaxed ? relaxedToleranceDeg : lockToleranceDeg);
 
     // If target pitch is > 135 (pointing UP), we must enforce strict roll
-    // to ensure they aren't pointing it sideways while aimed "up".
-    if (targetPitchDeg > 135.0) {
+    // For targets aiming near straight UP (pitch near 0) or straight DOWN (pitch near 180),
+    // we enforce a strict roll tolerance.
+    if (targetPitchDeg < 45.0 || targetPitchDeg > 135.0) {
       double r = rollDeg % 360.0;
       if (r > 180) r -= 360.0;
-      if (r.abs() > 15.0) return false;
+      
+      // Roll could be ~0 (face up/upright) or ~180 (face down).
+      // Check distance to 0 and distance to 180.
+      final double distTo0 = r.abs();
+      final double distTo180 = (r.abs() - 180.0).abs();
+      if (distTo0 > 15.0 && distTo180 > 15.0) return false;
     }
 
     return pitchLocked;

@@ -45,7 +45,7 @@ class SensorManager {
   SensorHealthStatus _gyroHealth = SensorHealthStatus.permissionDenied;
 
   StreamSubscription<Position>? _gpsSubscription;
-  StreamSubscription<GyroscopeEvent>? _gyroSubscription;
+  StreamSubscription<AccelerometerEvent>? _accelSubscription;
   StreamSubscription<CompassEvent>? _compassSubscription;
 
   final StreamController<NormalizedTelemetry> _controller =
@@ -56,17 +56,15 @@ class SensorManager {
 
   // ── Public lifecycle ──────────────────────────────────────────────────────
 
-  /// Start all sensors. Call after permissions are granted.
   Future<void> start() async {
     await _startGps();
-    await _startGyro();
+    await _startAccel();
     _startCompass();
   }
 
-  /// Stop all sensors and release resources.
   void dispose() {
     _gpsSubscription?.cancel();
-    _gyroSubscription?.cancel();
+    _accelSubscription?.cancel();
     _compassSubscription?.cancel();
     _controller.close();
   }
@@ -118,36 +116,38 @@ class SensorManager {
     }
   }
 
-  // ── PROVEN: Gyroscope pitch integration pipeline ──────────────────────────
+  // ── SENSOR: Accelerometer orientation pipeline (Drift-free) ───────────────
 
-  Future<void> _startGyro() async {
+  double _gravityX = 0.0;
+  double _gravityY = 0.0;
+  double _gravityZ = 0.0;
+
+  Future<void> _startAccel() async {
     _gyroHealth = SensorHealthStatus.degraded;
     _emit();
 
     try {
-      _gyroSubscription = gyroscopeEventStream().listen(
-        (GyroscopeEvent event) {
-          final DateTime now = DateTime.now();
-          if (_lastGyroTime != null) {
-            // PROVEN: dt from Duration.inMicroseconds
-            final double dt =
-                now.difference(_lastGyroTime!).inMicroseconds / 1e6;
-            // FIX: pitch uses X-axis (forward/backward tilt)
-            final double deltaPitch =
-                event.x * (180.0 / math.pi) * dt;
-            _pitchDeg = (_pitchDeg + deltaPitch).clamp(0.0, 180.0);
-            
-            // NEW: roll uses Y-axis (left/right tilt)
-            final double deltaRoll =
-                event.y * (180.0 / math.pi) * dt;
-            _rollDeg = (_rollDeg + deltaRoll).clamp(-180.0, 180.0);
-          }
-          _lastGyroTime = now;
+      // Replace gyro with accelerometer for absolute orientation.
+      _accelSubscription = accelerometerEventStream().listen(
+        (AccelerometerEvent event) {
+          // Low-pass filter to smooth out all jitter (alpha = 0.1 means 90% previous value, 10% new value)
+          const double alpha = 0.1;
+          _gravityX = alpha * event.x + (1 - alpha) * _gravityX;
+          _gravityY = alpha * event.y + (1 - alpha) * _gravityY;
+          _gravityZ = alpha * event.z + (1 - alpha) * _gravityZ;
+
+          // Pitch: Flat face up (Z=9.8, Y=0) is 180. Upright portrait (Z=0, Y=9.8) is 90. Flat face down (Z=-9.8, Y=0) is 0.
+          _pitchDeg = math.atan2(_gravityZ, _gravityY) * (180.0 / math.pi) + 90.0;
+          _pitchDeg = _pitchDeg.clamp(0.0, 180.0);
+          
+          // Roll: rotation left/right. 0 is perfectly level left-to-right.
+          _rollDeg = math.atan2(_gravityX, _gravityZ) * (180.0 / math.pi);
+          _rollDeg = _rollDeg.clamp(-180.0, 180.0);
+
           _gyroHealth = SensorHealthStatus.ok;
           _emit();
         },
         onError: (Object error) {
-          // PROVEN: explicit onError — gyro failure does not crash
           _gyroHealth = SensorHealthStatus.degraded;
           _emit();
         },

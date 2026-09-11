@@ -20,9 +20,7 @@ SimulationResult simulate(ScenarioInput input) {
     isFacingBackwards: input.isFacingBackwards,
   );
 
-  final double targetPitchDeg = input.seatSide == 'passenger'
-      ? 180.0 - baseTargetPitchDeg
-      : baseTargetPitchDeg;
+  final double targetPitchDeg = baseTargetPitchDeg;
 
   final double delta = SafeSpitCalculator.deltaDeg(
     actualPitchDeg: input.pitchDeg,
