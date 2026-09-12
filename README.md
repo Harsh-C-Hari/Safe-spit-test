@@ -39,7 +39,7 @@ For Software:
 # Installation
 ```bash
 # Clone the repository
-git clone https://github.com/alsabithka/useless.git
+git clone https://github.com/Harsh-C-Hari/Safe-Spit-useless-projects
 
 # Enter the application directory
 cd useless/app
@@ -79,7 +79,7 @@ For Software:
 *A real-world test demonstrating the transition from SEARCHING to SPIT LOCK using live vehicular speed and pitch matching.*
 
 # Additional Demos
-[Live website → https://alsabithka.github.io/useless/]
+[Live website → https://harsh-c-hari.github.io/Safe-Spit-useless-projects/]
 
 ## Team Contributions
 - Alsabith KA: Flutter HUD design, custom painter logic, core UI mechanics, Supabase integration & anonymous auth, website frontend.
