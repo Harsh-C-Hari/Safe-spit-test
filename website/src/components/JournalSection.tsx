@@ -23,7 +23,7 @@ const journalData: JournalEntry[] = [
     title: "JUST STARTED",
     blurb: "Just started the project without knowing anything wooh woohhhh",
     mediaType: "image",
-    mediaSrc: "/Safe-Spit-useless-projects/journal/image1.png",
+    mediaSrc: "/journal/image1.png",
     alt: "Project kickoff screenshot"
   },
   {
@@ -31,7 +31,7 @@ const journalData: JournalEntry[] = [
     title: "RUNNING COOL SHITS",
     blurb: "Running some cool shits",
     mediaType: "image",
-    mediaSrc: "/useless/journal/image2.png",
+    mediaSrc: "/journal/image2.png",
     alt: "Running something cool"
   },
   {
@@ -39,7 +39,7 @@ const journalData: JournalEntry[] = [
     title: "FULL TRAGDYY",
     blurb: "Full tragdyy analloooooo",
     mediaType: "image",
-    mediaSrc: "/useless/journal/image3.png",
+    mediaSrc: "/journal/image3.png",
     alt: "Full tragedy"
   },
   {
@@ -47,7 +47,7 @@ const journalData: JournalEntry[] = [
     title: "AGAIN PANI PALLI",
     blurb: "Again pani palli guysssss",
     mediaType: "image",
-    mediaSrc: "/useless/journal/image4.png",
+    mediaSrc: "/journal/image4.png",
     alt: "Again doing it"
   },
   {
@@ -55,7 +55,7 @@ const journalData: JournalEntry[] = [
     title: "THE LOOP",
     blurb: "Doing and undoing reset to og — what the heck it's a loop",
     mediaType: "image",
-    mediaSrc: "/useless/journal/image5.png",
+    mediaSrc: "/journal/image5.png",
     alt: "Doing and undoing in a loop"
   },
   {
@@ -63,7 +63,7 @@ const journalData: JournalEntry[] = [
     title: "OVAL HEAD",
     blurb: "Just try something new — removing the whole vehicle system and adding an oval for head placements",
     mediaType: "image",
-    mediaSrc: "/useless/journal/image6.png",
+    mediaSrc: "/journal/image6.png",
     alt: "Oval head placement experiment"
   },
   {
@@ -71,7 +71,7 @@ const journalData: JournalEntry[] = [
     title: "BUG MATRAM",
     blurb: "Buggode bug matram but ever failed ever win ennalle — lets give it a shot",
     mediaType: "image",
-    mediaSrc: "/useless/journal/image7.png",
+    mediaSrc: "/journal/image7.png",
     alt: "Debugging session"
   },
   {
@@ -79,7 +79,7 @@ const journalData: JournalEntry[] = [
     title: "VS CODE ESCAPE",
     blurb: "Just switched to VS Code — the Antigravity sucks so much",
     mediaType: "image",
-    mediaSrc: "/useless/journal/image8.png",
+    mediaSrc: "/journal/image8.png",
     alt: "Switched to VS Code"
   },
   {
@@ -87,7 +87,7 @@ const journalData: JournalEntry[] = [
     title: "SUPA BASEEEEE",
     blurb: "Returned to Antigravity and set upping the Supa Baseeeee",
     mediaType: "image",
-    mediaSrc: "/useless/journal/image9.png",
+    mediaSrc: "/journal/image9.png",
     alt: "Supabase setup"
   },
   {
@@ -95,7 +95,7 @@ const journalData: JournalEntry[] = [
     title: "JWT CHAOS",
     blurb: "We made JWT — a fun implementation where any person with the same name accesses the same data. Typically useless.",
     mediaType: "image",
-    mediaSrc: "/useless/journal/image10.png",
+    mediaSrc: "/journal/image10.png",
     alt: "JWT implementation"
   },
   {
@@ -103,7 +103,7 @@ const journalData: JournalEntry[] = [
     title: "LANDING PAGE",
     blurb: "Built the landing page and a dummy journey — it was a bit of a work",
     mediaType: "image",
-    mediaSrc: "/useless/journal/image11.png",
+    mediaSrc: "/journal/image11.png",
     alt: "Landing page built"
   },
 ];
