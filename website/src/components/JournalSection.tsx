@@ -23,7 +23,7 @@ const journalData: JournalEntry[] = [
     title: "JUST STARTED",
     blurb: "Just started the project without knowing anything wooh woohhhh",
     mediaType: "image",
-    mediaSrc: "/useless/journal/image1.png",
+    mediaSrc: "/Safe-Spit-useless-projects/journal/image1.png",
     alt: "Project kickoff screenshot"
   },
   {
@@ -115,7 +115,7 @@ export const JournalSection: React.FC = () => {
   const btnNextRef = useRef<HTMLButtonElement>(null);
   const captionRef = useRef<HTMLDivElement>(null);
   const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
-  
+
   const [activeIndex, setActiveIndex] = useState(0);
   const [layout, setLayout] = useState({ stepVW: 50, baseOffset: 30, gapVW: 6 });
   const isAnimating = useRef(false);
@@ -176,7 +176,7 @@ export const JournalSection: React.FC = () => {
   // Slide, Caption, and Video Animation
   useEffect(() => {
     if (!trackRef.current) return;
-    
+
     const cards = Array.from(trackRef.current.children) as HTMLElement[];
     if (!cards.length) return;
 
@@ -206,7 +206,7 @@ export const JournalSection: React.FC = () => {
 
     // Cross-fade the caption below
     if (captionRef.current) {
-      gsap.fromTo(captionRef.current, 
+      gsap.fromTo(captionRef.current,
         { opacity: 0, y: 8 },
         { opacity: 1, y: 0, duration: 0.5, delay: 0.3, ease: 'power2.out' }
       );
@@ -217,14 +217,14 @@ export const JournalSection: React.FC = () => {
       if (!video) return;
       if (idx === activeIndex) {
         if (!video.src && journalData[idx].mediaSrc) {
-           video.src = journalData[idx].mediaSrc;
+          video.src = journalData[idx].mediaSrc;
         }
         video.play().catch(e => console.warn('Autoplay blocked:', e));
       } else {
         video.pause();
         // Preload adjacent video source lazily
         if (Math.abs(idx - activeIndex) === 1 && !video.src && journalData[idx].mediaSrc) {
-           video.src = journalData[idx].mediaSrc;
+          video.src = journalData[idx].mediaSrc;
         }
       }
     });
@@ -243,10 +243,10 @@ export const JournalSection: React.FC = () => {
     // Create highly smoothed quickTo setters for inertia (increased duration for heavier inertia)
     const xToCards = gsap.quickTo(cards, "x", { duration: 1.5, ease: "power3.out" });
     const yToCards = gsap.quickTo(cards, "y", { duration: 1.5, ease: "power3.out" });
-    
+
     const xToCaption = caption ? gsap.quickTo(caption, "x", { duration: 2.0, ease: "power3.out" }) : null;
     const yToCaption = caption ? gsap.quickTo(caption, "y", { duration: 2.0, ease: "power3.out" }) : null;
-    
+
     const xToBg = bgTitle ? gsap.quickTo(bgTitle, "x", { duration: 3.5, ease: "power3.out" }) : null;
     const yToBg = bgTitle ? gsap.quickTo(bgTitle, "y", { duration: 3.5, ease: "power3.out" }) : null;
 
@@ -283,26 +283,26 @@ export const JournalSection: React.FC = () => {
   // Touch Swipe via Draggable
   useEffect(() => {
     if (!trackRef.current) return;
-    
+
     const maxIndex = journalData.length - 1;
 
     const draggables = Draggable.create(trackRef.current, {
       type: "x",
       edgeResistance: 0.85,
       lockAxis: true,
-      onDragEnd: function() {
+      onDragEnd: function () {
         const deltaX = this.endX - this.startX;
         const isMobile = window.innerWidth <= 768;
         // On mobile, a swipe of 50px is often enough to register intent.
         const threshold = isMobile ? Math.min(window.innerWidth * 0.15, 60) : window.innerWidth * 0.1;
-        
+
         let newIndex = activeIndex;
         if (deltaX < -threshold && newIndex < maxIndex) {
           newIndex++;
         } else if (deltaX > threshold && newIndex > 0) {
           newIndex--;
         }
-        
+
         if (newIndex === activeIndex) {
           // Snap back if threshold not met
           gsap.to(trackRef.current, {
@@ -334,11 +334,11 @@ export const JournalSection: React.FC = () => {
   const activeEntry = journalData[activeIndex];
 
   return (
-    <section ref={containerRef} style={{ 
-      height: '100vh', 
-      backgroundColor: 'var(--color-black)', 
-      color: 'var(--color-bg)', 
-      display: 'flex', 
+    <section ref={containerRef} style={{
+      height: '100vh',
+      backgroundColor: 'var(--color-black)',
+      color: 'var(--color-bg)',
+      display: 'flex',
       flexDirection: 'column',
       justifyContent: 'center',
       position: 'relative',
@@ -402,8 +402,8 @@ export const JournalSection: React.FC = () => {
       <div style={{ width: '100%', zIndex: 1 }}>
         <div ref={trackRef} style={{ display: 'flex', width: 'max-content', gap: `${layout.gapVW}vw`, cursor: 'grab' }}>
           {journalData.map((entry, idx) => (
-            <div key={entry.id} className="journal-card" style={{ 
-              border: '1px solid var(--border-strong, var(--color-acid-green))', 
+            <div key={entry.id} className="journal-card" style={{
+              border: '1px solid var(--border-strong, var(--color-acid-green))',
               backgroundColor: 'rgba(17,17,17,0.5)',
               transformOrigin: 'center center',
               overflow: 'hidden',
@@ -411,19 +411,19 @@ export const JournalSection: React.FC = () => {
               boxSizing: 'border-box'
             }}>
               {entry.mediaType === 'video' ? (
-                <video 
+                <video
                   ref={(el) => { videoRefs.current[idx] = el; }}
                   poster={entry.poster}
-                  muted 
-                  loop 
-                  playsInline 
+                  muted
+                  loop
+                  playsInline
                   aria-label={entry.alt}
                   style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                 />
               ) : (
-                <img 
-                  src={entry.mediaSrc} 
-                  alt={entry.alt} 
+                <img
+                  src={entry.mediaSrc}
+                  alt={entry.alt}
                   loading={idx <= 1 ? "eager" : "lazy"}
                   style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                 />
@@ -434,8 +434,8 @@ export const JournalSection: React.FC = () => {
       </div>
 
       {/* Caption Box (Below Track) */}
-      <div className="journal-caption" style={{ 
-        position: 'absolute', 
+      <div className="journal-caption" style={{
+        position: 'absolute',
         zIndex: 10,
         pointerEvents: 'none'
       }}>
@@ -443,10 +443,10 @@ export const JournalSection: React.FC = () => {
           <h3 style={{ fontSize: 'clamp(1.5rem, 4vw, 2.5rem)', margin: '1vh 0', textTransform: 'uppercase', lineHeight: 1, color: 'var(--color-acid-green)' }}>
             {activeEntry.title}
           </h3>
-          <p style={{ 
-            fontSize: 'clamp(1rem, 2vw, 1.5rem)', 
-            lineHeight: 1.4, 
-            opacity: 0.9, 
+          <p style={{
+            fontSize: 'clamp(1rem, 2vw, 1.5rem)',
+            lineHeight: 1.4,
+            opacity: 0.9,
             margin: '0 0 1vh 0',
             display: '-webkit-box',
             WebkitLineClamp: 3,
@@ -461,14 +461,14 @@ export const JournalSection: React.FC = () => {
       {/* Navigation Buttons */}
       <div className="journal-nav-buttons" style={{ position: 'absolute', display: 'flex', zIndex: 20 }}>
         {/* Left Arrow Button */}
-        <button 
+        <button
           ref={btnPrevRef}
           className="journal-nav-btn"
           onClick={goPrev}
           disabled={activeIndex === 0}
-          style={{ 
-            borderRadius: '50%', 
-            border: '1px solid var(--color-acid-green)', 
+          style={{
+            borderRadius: '50%',
+            border: '1px solid var(--color-acid-green)',
             backgroundColor: 'transparent',
             color: 'var(--color-acid-green)',
             cursor: activeIndex === 0 ? 'not-allowed' : 'pointer',
@@ -495,14 +495,14 @@ export const JournalSection: React.FC = () => {
         </button>
 
         {/* Right Arrow Button */}
-        <button 
+        <button
           ref={btnNextRef}
           className="journal-nav-btn"
           onClick={goNext}
           disabled={activeIndex === journalData.length - 1}
-          style={{ 
-            borderRadius: '50%', 
-            border: '1px solid var(--color-acid-green)', 
+          style={{
+            borderRadius: '50%',
+            border: '1px solid var(--color-acid-green)',
             backgroundColor: 'transparent',
             color: 'var(--color-acid-green)',
             cursor: activeIndex === journalData.length - 1 ? 'not-allowed' : 'pointer',
