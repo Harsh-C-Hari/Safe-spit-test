@@ -23,7 +23,7 @@ const journalData: JournalEntry[] = [
     title: "JUST STARTED",
     blurb: "Just started the project without knowing anything wooh woohhhh",
     mediaType: "image",
-    mediaSrc: "/journal/image1.png",
+    mediaSrc: "/Safe-Spit-useless-projects/journal/image1.png",
     alt: "Project kickoff screenshot"
   },
   {
