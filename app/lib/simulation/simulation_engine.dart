@@ -16,7 +16,6 @@ import 'trajectory_model.dart';
 SimulationResult simulate(ScenarioInput input) {
   final double baseTargetPitchDeg = SafeSpitCalculator.targetPitch(
     input.speedKmh,
-    vehicle: input.vehicle,
     isFacingBackwards: input.isFacingBackwards,
   );
 
@@ -50,7 +49,7 @@ SimulationResult simulate(ScenarioInput input) {
     seed: input.seed,
     windSpeedKmh: input.windSpeedKmh,
     windDirectionDeg: input.windDirectionDeg,
-    windSensitivity: input.vehicle.windSensitivity,
+    windSensitivity: 1.0,
     targetDistanceM: input.targetDistanceM,
   );
 

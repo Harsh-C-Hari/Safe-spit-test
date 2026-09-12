@@ -7,13 +7,14 @@
 import 'package:flutter/foundation.dart';
 
 import '../sensors/normalized_telemetry.dart';
-import '../simulation/safe_spit_calculator.dart';
 import '../simulation/scenario.dart';
 import '../simulation/scoring.dart';
 import '../simulation/simulation_engine.dart';
-import '../simulation/vehicle_profiles.dart';
 import '../sensors/sensor_manager.dart';
 import '../sensors/demo_mode_source.dart';
+import '../challenge/challenge_state.dart';
+import '../services/score_persistence_service.dart';
+import '../services/player_service.dart';
 import 'dart:async';
 import 'spit_lock_controller.dart';
 
@@ -36,11 +37,6 @@ class GameState extends ChangeNotifier {
   // ── Scenario ───────────────────────────────────────────────────────────────
   String _seed = 'DEMO01'; // default demo seed
   String get seed => _seed;
-
-  VehicleProfile _vehicle = VehicleProfiles.car;
-  VehicleProfile get vehicle => _vehicle;
-  String _seatSide = 'driver'; // India: driver=right, passenger=left
-  String get seatSide => _seatSide;
 
   String _mode = 'precision';
   String get mode => _mode;
@@ -65,6 +61,24 @@ class GameState extends ChangeNotifier {
 
   ScoreBreakdown? _finalScore;
   ScoreBreakdown? get finalScore => _finalScore;
+  ChallengeResult? _challengeResult;
+  ChallengeResult? get challengeResult => _challengeResult;
+  late final ScorePersistenceService _scorePersistence;
+  ScoreSyncState? _scoreSyncState;
+  ScoreSyncState? get scoreSyncState => _scoreSyncState;
+
+  final PlayerService playerService;
+
+  GameState({required this.playerService}) {
+    _scorePersistence = ScorePersistenceService(playerService: playerService);
+  }
+
+  void clearChallengeSnapshot() {
+    final result = _challengeResult;
+    if (result == null) return;
+    _challengeResult = result.copyWith();
+    notifyListeners();
+  }
 
   // ── Demo mode ─────────────────────────────────────────────────────────────
   bool _isDemoMode = false;
@@ -89,6 +103,7 @@ class GameState extends ChangeNotifier {
   /// Enter HUD from the permission gate. Sets Demo Mode if [demo] is true.
   void enterHud({bool demo = false}) {
     _cleanupSensors();
+    unawaited(_scorePersistence.syncPending());
     
     _isDemoMode = demo;
     if (demo) {
@@ -117,13 +132,11 @@ class GameState extends ChangeNotifier {
     // Run the simulation
     final scenario = ScenarioInput(
       seed: _seed,
-      vehicle: _vehicle,
       speedKmh: telemetry.speedKmh,
       pitchDeg: telemetry.pitchDeg,
       rollDeg: telemetry.rollDeg,
       windSpeedKmh: 0.0, // TODO: derive from seed in Phase 4 full impl
       windDirectionDeg: 0.0,
-      seatSide: _seatSide,
       isFacingBackwards: telemetry.isFacingBackwards,
       mode: _mode,
     );
@@ -155,11 +168,12 @@ class GameState extends ChangeNotifier {
   }
 
   /// Launch the spit — freeze simulation and compute score.
-  void launch() {
+  void launch({ChallengeResult? challengeResult}) {
     if (_phase != GamePhase.locked && _phase != GamePhase.locking) return;
 
     // Freeze the simulation snapshot
     _launchedResult = _simResult;
+    _challengeResult = challengeResult;
     _setPhase(GamePhase.launched);
 
     // Compute deterministic score
@@ -173,18 +187,33 @@ class GameState extends ChangeNotifier {
       _setPhase(GamePhase.scored);
     }
 
+    if (challengeResult != null) {
+      unawaited(_persistChallengeScore(challengeResult));
+    }
+
+    notifyListeners();
+  }
+
+  Future<void> _persistChallengeScore(ChallengeResult result) async {
+    _scoreSyncState = await _scorePersistence.saveChallenge(
+      result: result,
+      seed: _seed,
+      mode: _mode,
+      physicsPoints: _finalScore?.total ?? 0,
+    );
     notifyListeners();
   }
 
   /// Start a new round with the same or new scenario, returning to the menu.
-  void reset({String? seed, VehicleProfile? vehicle, String? mode}) {
+  void reset({String? seed, String? mode}) {
     _seed = seed ?? _generateSeed();
-    _vehicle = vehicle ?? _vehicle;
     _mode = mode ?? _mode;
     _hudLiveStart = null;
     _timeToLockMs = 0;
     _launchedResult = null;
     _finalScore = null;
+    _challengeResult = null;
+    _scoreSyncState = null;
     _simResult = null;
     lockController.reset();
     _setPhase(GamePhase.idle);
@@ -196,16 +225,12 @@ class GameState extends ChangeNotifier {
     _timeToLockMs = 0;
     _launchedResult = null;
     _finalScore = null;
+    _challengeResult = null;
+    _scoreSyncState = null;
     _simResult = null;
     lockController.reset();
     _setPhase(GamePhase.hudLive);
   }
-
-  void selectVehicle(VehicleProfile vehicle) {
-    _vehicle = vehicle;
-    notifyListeners();
-  }
-  void setSeatSide(String s) { _seatSide = s; notifyListeners(); }
 
   void _setPhase(GamePhase phase) {
     _phase = phase;

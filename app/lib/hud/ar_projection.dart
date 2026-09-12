@@ -66,8 +66,8 @@ class ArProjection {
     // If deltaYaw is positive, target is to the RIGHT of the camera center.
     double deltaYaw = targetYawDeg - phoneYawDeg;
     // Normalize deltaYaw between -180 and 180
-    while (deltaYaw > 180) deltaYaw -= 360;
-    while (deltaYaw < -180) deltaYaw += 360;
+    while (deltaYaw > 180) { deltaYaw -= 360; }
+    while (deltaYaw < -180) { deltaYaw += 360; }
 
     // If deltaPitch is positive, target is BELOW the camera center.
     final double deltaPitch = targetPitchDeg - cameraPitchDeg;

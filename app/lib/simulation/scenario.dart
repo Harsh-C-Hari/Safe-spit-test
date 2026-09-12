@@ -6,14 +6,11 @@
 // RULE 2: No Flutter imports.
 // RULE 11: No DateTime.now(), no Random() — determinism is a feature.
 
-import 'safe_spit_calculator.dart';
-
 /// Input to a single simulation run. Fully determines the output.
 /// Corresponds to shared-spec/scenario.schema.json.
 class ScenarioInput {
   final String schemaVersion;
   final String seed; // 6-char uppercase hex (D-19)
-  final VehicleProfile vehicle;
   final double speedKmh;
   final double pitchDeg; // actualPitchDeg from sensor abstraction
   final double rollDeg;
@@ -22,14 +19,12 @@ class ScenarioInput {
   final double windSpeedKmh;
   final double windDirectionDeg;
   final double targetDistanceM;
-  final String seatSide; // 'driver' or 'passenger'
   final bool isFacingBackwards;
   final String mode; // 'precision', 'crosswind', 'target_strike', etc.
 
   const ScenarioInput({
     this.schemaVersion = '0.1.0',
     required this.seed,
-    required this.vehicle,
     required this.speedKmh,
     required this.pitchDeg,
     this.rollDeg = 0.0,
@@ -38,7 +33,6 @@ class ScenarioInput {
     this.windSpeedKmh = 0.0,
     this.windDirectionDeg = 0.0,
     this.targetDistanceM = 50.0,
-    this.seatSide = 'driver',
     this.isFacingBackwards = false,
     this.mode = 'precision',
   });
@@ -47,7 +41,6 @@ class ScenarioInput {
     return ScenarioInput(
       schemaVersion: json['schemaVersion'] as String? ?? '0.1.0',
       seed: json['seed'] as String,
-      vehicle: VehicleProfile.fromJson(json['vehicle'] as Map<String, dynamic>),
       speedKmh: (json['speedKmh'] as num).toDouble(),
       pitchDeg: (json['pitchDeg'] as num).toDouble(),
       rollDeg: (json['rollDeg'] as num?)?.toDouble() ?? 0.0,
@@ -56,7 +49,6 @@ class ScenarioInput {
       windSpeedKmh: (json['windSpeedKmh'] as num?)?.toDouble() ?? 0.0,
       windDirectionDeg: (json['windDirectionDeg'] as num?)?.toDouble() ?? 0.0,
       targetDistanceM: (json['targetDistanceM'] as num?)?.toDouble() ?? 50.0,
-      seatSide: json['seatSide'] as String? ?? 'driver',
       isFacingBackwards: json['isFacingBackwards'] as bool? ?? false,
       mode: json['mode'] as String? ?? 'precision',
     );
@@ -65,7 +57,6 @@ class ScenarioInput {
   Map<String, dynamic> toJson() => {
         'schemaVersion': schemaVersion,
         'seed': seed,
-        'vehicle': vehicle.toJson(),
         'speedKmh': speedKmh,
         'pitchDeg': pitchDeg,
         'rollDeg': rollDeg,
@@ -74,7 +65,6 @@ class ScenarioInput {
         'windSpeedKmh': windSpeedKmh,
         'windDirectionDeg': windDirectionDeg,
         'targetDistanceM': targetDistanceM,
-        'seatSide': seatSide,
         'isFacingBackwards': isFacingBackwards,
         'mode': mode,
       };

@@ -35,7 +35,7 @@ class LockTransition {
 
 /// The edge-triggered lock state machine.
 ///
-/// Feed it [NormalizedTelemetry] ticks and a [VehicleProfile] and it
+/// Feed it [NormalizedTelemetry] ticks and a [SimulationResult] and it
 /// will emit [LockTransition] events whenever lock state changes.
 ///
 /// Audio and haptic handlers should subscribe to [onTransition] and

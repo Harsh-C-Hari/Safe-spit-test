@@ -1,0 +1,140 @@
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,100..700;1,100..700&family=Space+Grotesk:wght@300..700&display=swap');
+
+:root {
+  --color-bg: #F3F1EA;
+  --color-black: #111111;
+  --color-gray: #8D8B84;
+  --color-light-gray: #D8D6CE;
+  --color-acid-green: #C7FF3D;
+  --color-orange: #FF5C35;
+
+  --font-editorial: 'Space Grotesk', sans-serif;
+  --font-technical: 'IBM Plex Mono', monospace;
+
+  --border-default: 1px solid rgba(17,17,17,0.15);
+  --border-strong: 1px solid #111111;
+  --border-heavy: 2px solid #111111;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--color-bg);
+  color: var(--color-black);
+  font-family: var(--font-editorial);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* Texture overlay */
+.texture-overlay {
+  position: fixed;
+  top: 0; left: 0; width: 100vw; height: 100vh;
+  pointer-events: none;
+  z-index: 9999;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.08'/%3E%3C/svg%3E");
+  mix-blend-mode: multiply;
+}
+
+.technical-text {
+  font-family: var(--font-technical);
+}
+
+.persistent-nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 100;
+  mix-blend-mode: difference;
+  color: #fff;
+}
+
+.nav-item {
+  position: absolute;
+  pointer-events: auto;
+  font-family: var(--font-technical);
+  font-size: 0.85rem;
+  font-weight: 500;
+  padding: 2vw;
+  text-transform: uppercase;
+}
+
+.nav-top-left { 
+  top: 0; 
+  left: 0; 
+  transition: letter-spacing 0.3s ease, transform 0.3s ease;
+}
+.nav-top-left:hover {
+  letter-spacing: 0.2em;
+  transform: translateX(4px);
+}
+.nav-top-right { top: 0; right: 0; cursor: pointer; }
+.nav-bottom-left { bottom: 0; left: 0; }
+.nav-bottom-right { bottom: 0; right: 0; }
+
+/* -----------------------------
+   MOBILE RESPONSIVE OVERRIDES
+   ----------------------------- */
+@media (max-width: 768px) {
+  /* General section padding */
+  section {
+    padding: 15vw 5vw !important;
+  }
+
+  /* Make headings much larger on mobile relative to viewport */
+  h2, h2.responsive-h2, section > div[style*="font-size: 7vw"] {
+    font-size: 12vw !important;
+    line-height: 1.1 !important;
+  }
+
+  /* Convert 2-column grids to 1-column */
+  section > div[style*="grid-template-columns: 1fr 1fr"],
+  section > div[style*="grid-template-columns: 1fr 2fr"] {
+    grid-template-columns: 1fr !important;
+    gap: 8vw !important;
+  }
+
+  /* Convert flex rows to columns */
+  .responsive-flex {
+    flex-direction: column !important;
+  }
+
+  /* Adjust typography scales for smaller screens */
+  div[style*="font-size: 2vw"], 
+  div[style*="font-size: 2.5vw"] {
+    font-size: 5vw !important;
+  }
+
+  div[style*="font-size: 1.2vw"], 
+  div[style*="font-size: 1vw"] {
+    font-size: 3vw !important;
+  }
+
+  /* Section 08 specific punchline */
+  div[style*="font-size: 20vw"] {
+    font-size: 35vw !important;
+  }
+  
+  /* Make lists and technical cards take full width */
+  .board-row {
+    font-size: 4vw !important;
+  }
+  
+  .calib-element input[type="range"] {
+    margin-bottom: 2vh;
+  }
+
+  /* Ensure touch targets meet minimum guidelines */
+  button, .nav-item {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}

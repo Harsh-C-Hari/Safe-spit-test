@@ -3,13 +3,19 @@
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:safespit/main.dart';
+import 'package:safespit/services/player_service.dart';
 
 void main() {
-  testWidgets('App launches and shows SAFE//SPIT branding', (WidgetTester tester) async {
-    await tester.pumpWidget(const SafeSpitApp());
+  testWidgets('App smoke test', (WidgetTester tester) async {
+    final playerService = PlayerService();
+
+    // Build our app and trigger a frame.
+    await tester.pumpWidget(SafeSpitApp(
+      playerService: playerService,
+    ));
     await tester.pump(); // First frame
 
-    // The PermissionGate shows SAFE//SPIT title
-    expect(find.text('SAFE//SPIT'), findsWidgets);
+    // The OnboardingScreen shows ENTER CALLSIGN because onboarding is not complete
+    expect(find.text('ENTER CALLSIGN'), findsOneWidget);
   });
 }

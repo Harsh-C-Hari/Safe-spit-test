@@ -27,11 +27,23 @@ dependencies:
   # State management — planned (D-8, D-16)
   provider: ^6.1.2
   flutter_compass: ^0.8.1
+  shared_preferences: ^2.5.3
+  supabase_flutter: ^2.9.1
+
+  # Typography — Space Grotesk for editorial headings (mirrors website font stack)
+  google_fonts: ^6.2.1
+  video_player: ^2.14.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.13.1
+
+flutter_launcher_icons:
+  android: true
+  ios: false
+  image_path: "assets/logo.jpg"
 
 flutter:
   uses-material-design: true
@@ -39,6 +51,7 @@ flutter:
   assets:
     - assets/audio/
     - assets/fonts/
+    - assets/video/
 
   fonts:
     - family: SpaceMono

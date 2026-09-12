@@ -9,11 +9,16 @@ import 'package:provider/provider.dart';
 
 import 'package:camera/camera.dart';
 
+import 'theme/app_theme.dart';
+
 import 'game/game_state.dart';
 import 'hud/hud_screen.dart';
 import 'hud/permission_gate.dart';
 import 'screens/result_screen.dart';
-import 'screens/vehicle_select_screen.dart';
+import 'screens/onboarding_screen.dart';
+import 'screens/profile_screen.dart';
+import 'services/supabase_service.dart';
+import 'services/player_service.dart';
 
 late List<CameraDescription> globalCameras;
 
@@ -27,45 +32,64 @@ void main() async {
     debugPrint('Camera init failed: $e');
   }
 
-  // Lock to portrait orientation for the HUD experience
+  // Initialize services
+  final supabaseService = SupabaseService();
+  await supabaseService.initialize();
+
+  final playerService = PlayerService();
+  await playerService.initialize();
+
+  // Allow all orientations — layouts are responsive per-screen.
+  // (HUD screen stays full-bleed on all sizes; other screens adapt.)
   SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+    DeviceOrientation.landscapeLeft,
+    DeviceOrientation.landscapeRight,
   ]);
 
   // Full-screen immersive mode — tactical aesthetic
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
 
-  runApp(const SafeSpitApp());
+  runApp(SafeSpitApp(
+    playerService: playerService,
+  ));
 }
 
-/// Root application widget. Provides [GameState] to the entire tree.
+/// Root application widget. Provides global services to the entire tree.
 class SafeSpitApp extends StatelessWidget {
-  const SafeSpitApp({super.key});
+  final PlayerService playerService;
+
+  const SafeSpitApp({
+    super.key,
+    required this.playerService,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider<GameState>(
-      create: (_) => GameState(),
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider.value(value: playerService),
+        ChangeNotifierProvider<GameState>(
+          create: (_) => GameState(playerService: playerService),
+        ),
+      ],
       child: MaterialApp(
         title: 'SAFE//SPIT',
         debugShowCheckedModeBanner: false,
-        theme: ThemeData(
-          brightness: Brightness.dark,
-          scaffoldBackgroundColor: Colors.black,
-          fontFamily: 'SpaceMono',
-          colorScheme: const ColorScheme.dark(
-            primary: Color(0xFF39FF14),
-            secondary: Color(0xFF39FF14),
-            surface: Colors.black,
-          ),
-        ),
+        theme: AppTheme.themeData,
+        // Dark theme used only by HUD/PermissionGate — they set their
+        // own scaffold background to Colors.black explicitly.
+        darkTheme: AppTheme.themeData,
+        themeMode: ThemeMode.light,
         home: const SafeSpitRouter(),
         // Named routes for navigation
         routes: {
           '/gate': (_) => const PermissionGate(),
           '/hud': (_) => const SafeSpitHudWrapper(),
-          '/vehicle_select': (_) => const VehicleSelectScreen(),
           '/result': (_) => const ResultScreen(),
+          '/onboarding': (_) => const OnboardingScreen(),
+          '/profile': (_) => const ProfileScreen(),
         },
       ),
     );
@@ -79,8 +103,12 @@ class SafeSpitRouter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<GameState>(
-      builder: (context, gameState, _) {
+    return Consumer2<GameState, PlayerService>(
+      builder: (context, gameState, playerService, _) {
+        if (!playerService.isOnboardingComplete) {
+          return const OnboardingScreen();
+        }
+
         // Scored → show result screen
         if (gameState.phase == GamePhase.scored) {
           return const ResultScreen();

@@ -35,7 +35,6 @@ class SensorManager {
   double _speedKmh = 0.0;
   double _pitchDeg = 45.0; // SENSOR_SPEC.md: default to 45° (optimal) not 0°
   double _rollDeg = 0.0;
-  DateTime? _lastGyroTime;
   double? _gpsHeading;
   double? _compassHeading;
   double? _anchorCompassHeading;

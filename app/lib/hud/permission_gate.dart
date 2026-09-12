@@ -12,9 +12,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 
 import '../game/game_state.dart';
-import '../hud/missile_lock_reticle_painter.dart';
-import '../sensors/sensor_manager.dart';
-import '../sensors/demo_mode_source.dart';
+import '../theme/app_theme.dart';
 
 /// The permission gate screen.
 ///
@@ -97,19 +95,19 @@ class _PermissionGateState extends State<PermissionGate> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: AppColors.background,
       body: Stack(
         fit: StackFit.expand,
         children: [
           // Tactical background grid
           CustomPaint(painter: _GridPainter()),
 
-          // Green tint
-          Container(color: kTacticalGreen.withValues(alpha: 0.02)),
-
           Center(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 32),
+              padding: EdgeInsets.symmetric(
+                horizontal: responsivePaddingH(context),
+                vertical: AppSpacing.lg,
+              ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.center,
@@ -118,9 +116,9 @@ class _PermissionGateState extends State<PermissionGate> {
                   Text(
                     'SAFE//SPIT',
                     style: TextStyle(
-                      color: kTacticalGreen,
+                      color: AppColors.black,
                       fontFamily: 'SpaceMono',
-                      fontSize: 28,
+                      fontSize: responsiveFontSize(context, base: 24, scale: 0.06, max: 32),
                       fontWeight: FontWeight.bold,
                       letterSpacing: 8,
                     ),
@@ -129,9 +127,9 @@ class _PermissionGateState extends State<PermissionGate> {
                   Text(
                     'TACTICAL TRAJECTORY SYSTEM',
                     style: TextStyle(
-                      color: kTacticalGreen.withValues(alpha: 0.6),
+                      color: AppColors.black.withValues(alpha: 0.6),
                       fontFamily: 'SpaceMono',
-                      fontSize: 10,
+                      fontSize: responsiveFontSize(context, base: 8, scale: 0.02, max: 11),
                       letterSpacing: 3,
                     ),
                   ),
@@ -143,17 +141,18 @@ class _PermissionGateState extends State<PermissionGate> {
                     decoration: BoxDecoration(
                       border: Border.all(
                           color: _permissionsGranted
-                              ? kTacticalGreen
-                              : kDangerRed.withValues(alpha: 0.7)),
+                              ? AppColors.black
+                              : AppColors.orange,
+                          width: 2.0),
                     ),
                     child: Column(
                       children: [
                         Text(
                           _permissionsGranted ? 'SYSTEM ARMED' : 'SYSTEM LOCKED',
                           style: TextStyle(
-                            color: _permissionsGranted ? kTacticalGreen : kDangerRed,
+                            color: _permissionsGranted ? AppColors.black : AppColors.orange,
                             fontFamily: 'SpaceMono',
-                            fontSize: 18,
+                            fontSize: responsiveFontSize(context, base: 15, scale: 0.038, max: 20),
                             fontWeight: FontWeight.bold,
                             letterSpacing: 4,
                           ),
@@ -163,9 +162,9 @@ class _PermissionGateState extends State<PermissionGate> {
                           _statusMessage,
                           textAlign: TextAlign.center,
                           style: TextStyle(
-                            color: kTacticalGreen.withValues(alpha: 0.7),
+                            color: AppColors.black.withValues(alpha: 0.7),
                             fontFamily: 'SpaceMono',
-                            fontSize: 11,
+                            fontSize: responsiveFontSize(context, base: 9, scale: 0.024, max: 12),
                             letterSpacing: 1.5,
                           ),
                         ),
@@ -176,50 +175,38 @@ class _PermissionGateState extends State<PermissionGate> {
                   const SizedBox(height: 32),
 
                   if (_isChecking)
-                    SizedBox(
+                    const SizedBox(
                       width: 20,
                       height: 20,
                       child: CircularProgressIndicator(
-                        color: kTacticalGreen,
+                        color: AppColors.black,
                         strokeWidth: 1.5,
                       ),
                     )
                   else ...[
                     // Request permissions button
                     if (!_permissionsGranted)
-                      _buildButton(
+                      AppTacticalButton(
                         label: 'REQUEST SENSOR ACCESS',
-                        onTap: _requestPermissions,
+                        onPressed: _requestPermissions,
                         filled: true,
                       )
                     else
-                      _buildButton(
+                      AppTacticalButton(
                         label: 'ENTER NORMAL MODE',
-                        onTap: _enterRealMode,
+                        onPressed: _enterRealMode,
                         filled: true,
                       ),
 
                     const SizedBox(height: 12),
 
                     // PLANNED (D-1, Phase 3): Demo Mode entry — ALWAYS visible
-                    _buildButton(
+                    AppTacticalButton(
                       label: 'ENTER DEMO MODE',
-                      onTap: _enterDemoMode,
+                      onPressed: _enterDemoMode,
                       filled: false,
                     ),
 
-                    const SizedBox(height: 12),
-
-                    // PLANNED (Phase 8): Vehicle selection
-                    Consumer<GameState>(
-                      builder: (context, gameState, _) {
-                        return _buildButton(
-                          label: 'VEHICLE: ${gameState.vehicle.displayName.toUpperCase()}',
-                          onTap: () => Navigator.pushNamed(context, '/vehicle_select'),
-                          filled: false,
-                        );
-                      }
-                    ),
                   ],
 
                   const SizedBox(height: 32),
@@ -228,49 +215,30 @@ class _PermissionGateState extends State<PermissionGate> {
                     'REF BUILD v1.0 — SIMULATION ONLY\nNO REAL SPITTING AT PERSONS OR PROPERTY',
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      color: kTacticalGreen.withValues(alpha: 0.35),
+                      color: AppColors.black.withValues(alpha: 0.35),
                       fontFamily: 'SpaceMono',
-                      fontSize: 9,
+                      fontSize: responsiveFontSize(context, base: 7, scale: 0.02, max: 10),
                       letterSpacing: 1,
                     ),
+                  ),
+
+                  const SizedBox(height: 16),
+                  
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.person),
+                        color: AppColors.black,
+                        onPressed: () => Navigator.pushNamed(context, '/profile'),
+                      ),
+                    ],
                   ),
                 ],
               ),
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildButton({
-    required String label,
-    required VoidCallback onTap,
-    required bool filled,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 14),
-        decoration: BoxDecoration(
-          color: filled ? kTacticalGreen.withValues(alpha: 0.15) : Colors.transparent,
-          border: Border.all(
-            color: filled ? kTacticalGreen : kTacticalGreen.withValues(alpha: 0.5),
-          ),
-        ),
-        child: Center(
-          child: Text(
-            label,
-            style: TextStyle(
-              color: filled ? kTacticalGreen : kTacticalGreen.withValues(alpha: 0.7),
-              fontFamily: 'SpaceMono',
-              fontSize: 12,
-              fontWeight: filled ? FontWeight.bold : FontWeight.normal,
-              letterSpacing: 2,
-            ),
-          ),
-        ),
       ),
     );
   }
@@ -284,10 +252,11 @@ class _GridPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final Paint paint = Paint()
-      ..color = kTacticalGreen.withValues(alpha: 0.04)
+      ..color = AppColors.black.withValues(alpha: 0.04)
       ..strokeWidth = 0.5;
 
-    const double spacing = 40.0;
+    // Responsive grid spacing: 10% of screen width
+    final double spacing = size.width * 0.10;
     for (double x = 0; x < size.width; x += spacing) {
       canvas.drawLine(Offset(x, 0), Offset(x, size.height), paint);
     }

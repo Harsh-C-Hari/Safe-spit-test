@@ -10,17 +10,18 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
+import '../theme/app_theme.dart';
 import '../game/spit_lock_controller.dart';
 import '../simulation/scenario.dart';
 import '../simulation/trajectory_model.dart';
 
 // ── PROVEN color constants ────────────────────────────────────────────────────
 /// Tactical neon green — PROVEN from prototype (#39FF14).
-const Color kTacticalGreen = Color(0xFF39FF14);
+const Color kTacticalGreen = AppColors.acidGreen;
 /// Alert neon red — PLANNED (spec'd but not confirmed in prototype).
-const Color kDangerRed = Color(0xFFFF073A);
+const Color kDangerRed = AppColors.orange;
 /// Camera tint — PROVEN (5% opacity green).
-const Color kCameraTint = Color(0xFF39FF14);
+const Color kCameraTint = AppColors.acidGreen;
 
 /// The primary HUD reticle painter.
 ///
@@ -35,7 +36,6 @@ class MissileLockReticlePainter extends CustomPainter {
   final double deltaDeg;
   final double rollDeg;
   final bool isDemoMode;
-  final String seatSide; // driver/passenger
 
   // PLANNED fields
   final List<TrajectoryPoint>? trajectoryPoints;
@@ -53,7 +53,6 @@ class MissileLockReticlePainter extends CustomPainter {
     required this.deltaDeg,
     this.rollDeg = 0.0,
     required this.isDemoMode,
-    this.seatSide = 'driver',
     this.trajectoryPoints,
     this.deviationM,
     this.animValue = 0.0,
@@ -83,15 +82,16 @@ class MissileLockReticlePainter extends CustomPainter {
     final double centerRingRadius = size.width * 0.06;
     canvas.drawCircle(Offset(cx, cy), centerRingRadius, basePaint);
 
-    // ── PROVEN: Center pip ─────────────────────────────────────────────────
+    // ── PROVEN: Center pip ─────────────────────────────────────────────────────
     final Paint pipPaint = Paint()
       ..color = primaryColor
       ..style = PaintingStyle.fill;
-    canvas.drawCircle(Offset(cx, cy), 3.0, pipPaint);
+    // Pip radius: proportional to screen width (was hardcoded 3.0)
+    canvas.drawCircle(Offset(cx, cy), size.width * 0.008, pipPaint);
 
     // ── AIM GUIDE ARROW (hidden when locked) ────────────────────────────────
     if (lockState != SpitLockState.locked) {
-      _drawAimArrow(canvas, size, cx, cy, deltaDeg, speedKmh, actualPitchDeg, targetPitchDeg, rollDeg, seatSide: seatSide);
+      _drawAimArrow(canvas, size, cx, cy, deltaDeg, speedKmh, actualPitchDeg, targetPitchDeg, rollDeg);
     }
 
     // ── PROVEN: Corner brackets ────────────────────────────────────────────
@@ -250,7 +250,9 @@ class MissileLockReticlePainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeWidth = 3.0;
 
-    const double radius = 60.0; // slightly inside outer ring
+    // FIXED: was hardcoded 60.0 — now proportional to canvas (passed via cx/cy,
+    // but we need size here; use cx * 0.35 as proxy since cx = size.width / 2)
+    final double radius = cx * 0.35; // ~35% of half-width ≈ 17.5% of full width
     const double startAngle = -math.pi / 2; // top
     final double sweepAngle = quality * 2 * math.pi;
 
@@ -271,15 +273,20 @@ class MissileLockReticlePainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.0;
 
-    // Small rectangle in bottom-right corner to indicate demo
+    // FIXED: was hardcoded offsets (size.width - 52, size.height - 20, 46, 14)
+    // Now proportional to canvas size
+    final double rectW = size.width * 0.12;
+    final double rectH = size.height * 0.025;
     final Rect demoRect = Rect.fromLTWH(
-        size.width - 52, size.height - 20, 46, 14);
+        size.width - rectW - size.width * 0.03,
+        size.height - rectH - size.height * 0.02,
+        rectW,
+        rectH);
     canvas.drawRect(demoRect, demoPaint);
   }
 
-  void _drawAimArrow(Canvas canvas, Size size, double cx, double cy,
-      double deltaDeg, double speedKmh, double actualPitch, double targetPitch, double rollDeg,
-      {String seatSide = 'driver'}) {
+    void _drawAimArrow(Canvas canvas, Size size, double cx, double cy,
+      double deltaDeg, double speedKmh, double actualPitch, double targetPitch, double rollDeg) {
     final Paint arrowPaint = Paint()
       ..color = kTacticalGreen.withValues(alpha: 0.85)
       ..style = PaintingStyle.fill;
@@ -292,23 +299,29 @@ class MissileLockReticlePainter extends CustomPainter {
     final bool pointUp = targetPitch < actualPitch;
 
     // Calculate vertical offset based on error magnitude
-    // Keep a minimum of 55px from center so it doesn't overlap the reticle
-    double offsetMagnitude = (pitchDiff.abs() / 2.0).clamp(0.0, 80.0);
+    // Keep a minimum gap from center so it doesn't overlap the reticle
+    // FIXED: was hardcoded 55px gap and 80px max — now proportional to screen
+    final double minGap = size.height * 0.12;    // minimum clearance from center
+    final double maxOffset = size.height * 0.18; // maximum arrow travel
+    double offsetMagnitude = (pitchDiff.abs() / 2.0).clamp(0.0, maxOffset);
     // Add speed factor to make it more sensitive at higher speeds (if speed > 0)
     if (speedKmh > 5.0) {
       offsetMagnitude *= (speedKmh / 30.0).clamp(0.5, 2.0);
     }
-    
+    offsetMagnitude = offsetMagnitude.clamp(0.0, maxOffset);
+
     // Position vertically
     double arrowX = cx;
-    final double arrowY = pointUp ? cy - 55 - offsetMagnitude : cy + 55 + offsetMagnitude;
+    final double arrowY = pointUp
+        ? cy - minGap - offsetMagnitude
+        : cy + minGap + offsetMagnitude;
 
     // If target is vertical (<45 or >135), we also need strict roll guidance (roll must be <= 15).
     // Show horizontal deviation if roll is off.
     if (targetPitch < 45.0 || targetPitch > 135.0) {
       double r = rollDeg % 360.0;
       if (r > 180) r -= 360.0;
-      
+
       // If facing down (target near 0), "flat" means roll is ~180 or ~-180.
       if (targetPitch < 45.0) {
         if (r > 0) {
@@ -317,32 +330,39 @@ class MissileLockReticlePainter extends CustomPainter {
           r += 180.0;
         }
       }
-      
+
       // If r is positive, phone is tilted right. Target is left.
       // So move arrow left.
-      arrowX -= (r * 2.0).clamp(-80.0, 80.0);
+      final double maxLateral = size.width * 0.22;
+      arrowX -= (r * 2.0).clamp(-maxLateral, maxLateral);
     }
+
+    // Arrow geometry — FIXED: was hardcoded ±10px width, ±18px height
+    // Now proportional to screen
+    final double arrowHalfW = size.width * 0.025;  // ~2.5% of width
+    final double arrowHeight = size.height * 0.035; // ~3.5% of height
+    final double dotRadius = size.width * 0.009;    // tip dot
 
     final Path path = Path();
     if (pointUp) {
       // Triangle pointing UP
       path
         ..moveTo(arrowX, arrowY) // tip
-        ..lineTo(arrowX - 10, arrowY + 18)
-        ..lineTo(arrowX + 10, arrowY + 18)
+        ..lineTo(arrowX - arrowHalfW, arrowY + arrowHeight)
+        ..lineTo(arrowX + arrowHalfW, arrowY + arrowHeight)
         ..close();
     } else {
       // Triangle pointing DOWN
       path
         ..moveTo(arrowX, arrowY) // tip
-        ..lineTo(arrowX - 10, arrowY - 18)
-        ..lineTo(arrowX + 10, arrowY - 18)
+        ..lineTo(arrowX - arrowHalfW, arrowY - arrowHeight)
+        ..lineTo(arrowX + arrowHalfW, arrowY - arrowHeight)
         ..close();
     }
-    
+
     canvas.drawPath(path, arrowPaint);
     // Small direction dot at tip for visibility
-    canvas.drawCircle(Offset(arrowX, arrowY), 3.5, arrowPaint);
+    canvas.drawCircle(Offset(arrowX, arrowY), dotRadius, arrowPaint);
   }
 
   @override

@@ -7,70 +7,32 @@
 // RULE 1: Any change to this formula requires a DECISIONS.md entry.
 // RULE 16: Negative speed is clamped before the formula.
 //
-// Formula (PROVEN):
-//   targetPitch(v) = clamp(45 + (v / 5) * 1.2, 45, 85)
+// Formula:
+//   targetPitch(v) = clamp(v * 4.5, 0, 90)
 //
 // Test points (TV-01, TV-02, TV-03):
-//   0 km/h → 45.0°
-//   50 km/h → 57.0°
-//   200 km/h → 85.0° (clamp engaged)
+//   0 km/h → 0.0° (vertical)
+//   10 km/h → 45.0°
+//   20 km/h → 90.0° (clamp engaged)
 
 /// PROVEN core calculator. Preserved from the prototype.
 /// Pure function — no side effects, no imports beyond dart:math.
 class SafeSpitCalculator {
-  // ── TACTICAL "HIT YOURSELF" CONSTANTS ──────────────────────────────────────
-  static const double baseAngle = 90.0; // degrees (straight out, into the wind)
-  static const double minAngle = 10.0; // degrees (pointed aggressively forward/down)
+  static const double minAngle = 0.0;
   static const double maxAngle = 90.0; // degrees
-  static const double tiltPerSpeedStep = 2.0; // degrees per speed-step
-  static const double speedStepKmh = 5.0; // km/h per step
+  static const double anglePerKmh = 4.5;
   static const double lockToleranceDeg = 5.0; // PROVEN: |Δθ| <= 5.0 → locked
   static const double relaxedToleranceDeg = 15.0; // rear-facing tolerance
 
   // ── INVERTED FORMULA ───────────────────────────────────────────────────────
 
-  /// Compute the target pitch for a given speed [speedKmh] and [vehicle].
+  /// Compute the target pitch from the phone's current speed.
   ///
-  /// This formula has been deliberately inverted to calculate the exact angle
-  /// required to spit forward into the slipstream and guarantee hitting yourself.
-  static double targetPitch(double speedKmh, {VehicleProfile? vehicle, bool isFacingBackwards = false}) {
-    // Rule 16 / D-14: Clamp negative speed.
+  /// Zero speed points vertically up. The target rises with speed and is
+  /// constrained to the inclusive range [0, 90] degrees.
+  static double targetPitch(double speedKmh, {bool isFacingBackwards = false}) {
     final double v = speedKmh < 0 ? 0 : speedKmh;
-
-    String activeId = vehicle?.id ?? 'car';
-    double tf = vehicle?.turbulenceFactor ?? 1.0;
-    double bias = vehicle?.angleBias ?? 0.0;
-
-    // Use speed as the first main reference to correct impossible profiles.
-    if (v > 25.0 && (activeId == 'walking' || activeId == 'still')) {
-      activeId = 'car';
-      tf = 1.0;
-      bias = 0.0;
-    } else if (v > 5.0 && activeId == 'still') {
-      activeId = 'walking';
-      tf = 1.0; // from walking profile
-      bias = -2.0; // from walking profile
-    }
-
-    if (activeId == 'still' || (activeId == 'walking' && v <= 5.0)) {
-      return 0.0; // Straight UP (camera pointing at sky)
-    }
-    if (activeId == 'walking') {
-      // Spit upwards, but steadily increase to 90.0 (straight ahead) as speed approaches 20 km/h
-      // Scale from 0.0 starting at v=5.0, reaching 90.0 at v=20.0
-      return (0.0 + ((v - 5.0) * 6.0)).clamp(0.0, 90.0);
-    }
-
-    if (isFacingBackwards) {
-      // Backwards facing logic: Add angle as speed increases to point backwards over the shoulder.
-      // The wind will catch it and blow it forward into the user's face.
-      final double raw = baseAngle + (v / speedStepKmh) * tiltPerSpeedStep * tf + bias;
-      return raw.clamp(90.0, 180.0);
-    }
-
-    // Forward logic: Subtract angle as speed increases to point forward into the wind
-    final double raw = baseAngle - (v / speedStepKmh) * tiltPerSpeedStep * tf - bias;
-    return raw.clamp(minAngle, maxAngle);
+    return (v * anglePerKmh).clamp(minAngle, maxAngle);
   }
 
   /// Lock tolerance check (PROVEN).
@@ -113,49 +75,4 @@ class SafeSpitCalculator {
   }) {
     return (actualPitchDeg - targetPitchDeg).abs();
   }
-}
-
-/// Vehicle profile data record.
-/// Car is the identity profile: turbulenceFactor=1.0, angleBias=0.0 (D-4, Rule 20).
-/// All values are fictional — do not represent as physically realistic.
-class VehicleProfile {
-  final String id;
-  final String displayName;
-  final double turbulenceFactor; // Car = 1.0 (identity)
-  final double angleBias; // Car = 0.0 (identity)
-  final double windSensitivity; // Car = 1.0
-  final double difficulty; // 0.0..1.0
-  final bool eitherSide; // bike/walking can spit either side
-
-  const VehicleProfile({
-    required this.id,
-    required this.displayName,
-    required this.turbulenceFactor,
-    required this.angleBias,
-    required this.windSensitivity,
-    required this.difficulty,
-    this.eitherSide = false,
-  });
-
-    factory VehicleProfile.fromJson(Map<String, dynamic> json) {
-    return VehicleProfile(
-      id: json['id'] as String,
-      displayName: json['displayName'] as String,
-      turbulenceFactor: (json['turbulenceFactor'] as num).toDouble(),
-      angleBias: (json['angleBias'] as num).toDouble(),
-      windSensitivity: (json['windSensitivity'] as num).toDouble(),
-      difficulty: (json['difficulty'] as num).toDouble(),
-      eitherSide: json['eitherSide'] as bool? ?? false,
-    );
-  }
-
-  Map<String, dynamic> toJson() => {
-    'id': id,
-    'displayName': displayName,
-    'turbulenceFactor': turbulenceFactor,
-    'angleBias': angleBias,
-    'windSensitivity': windSensitivity,
-    'difficulty': difficulty,
-    'eitherSide': eitherSide,
-  };
 }
